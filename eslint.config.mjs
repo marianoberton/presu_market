@@ -20,6 +20,17 @@ const eslintConfig = [
       "next-env.d.ts",
     ],
   },
+  {
+    rules: {
+      "jsx-a11y/alt-text": ["error", {
+        "elements": ["img", "object", "area", "input[type=\"image\"]"],
+        "img": [],
+        "object": ["Object"],
+        "area": ["Area"],
+        "input[type=\"image\"]": ["InputImage"]
+      }]
+    }
+  }
 ];
 
 export default eslintConfig;

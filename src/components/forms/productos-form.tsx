@@ -77,7 +77,7 @@ export function ProductosForm({ productos, onChange }: ProductosFormProps) {
         {productos.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
             <p>No hay productos agregados</p>
-            <p className="text-sm">Haga clic en "Agregar Producto" para comenzar</p>
+            <p className="text-sm">Haga clic en &quot;Agregar Producto&quot; para comenzar</p>
           </div>
         ) : (
           <div className="space-y-4">
