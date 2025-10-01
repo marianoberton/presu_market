@@ -25,27 +25,27 @@ export function CondicionesForm({ data, onChange }: CondicionesFormProps) {
       </CardHeader>
       <CardContent className="space-y-4">
         <div>
-          <label htmlFor="pago" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="condicionesPago" className="block text-sm font-medium text-gray-700 mb-1">
             Condiciones de Pago
           </label>
           <Textarea
-            id="pago"
+            id="condicionesPago"
             placeholder="Condiciones de pago..."
-            value={data.pago}
-            onChange={(e) => handleChange('pago', e.target.value)}
+            value={data.condicionesPago}
+            onChange={(e) => handleChange('condicionesPago', e.target.value)}
             rows={3}
           />
         </div>
 
         <div>
-          <label htmlFor="entrega" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="condicionesEntrega" className="block text-sm font-medium text-gray-700 mb-1">
             Condiciones de Entrega
           </label>
           <Textarea
-            id="entrega"
+            id="condicionesEntrega"
             placeholder="Condiciones de entrega..."
-            value={data.entrega}
-            onChange={(e) => handleChange('entrega', e.target.value)}
+            value={data.condicionesEntrega}
+            onChange={(e) => handleChange('condicionesEntrega', e.target.value)}
             rows={3}
           />
         </div>

@@ -210,10 +210,6 @@ interface PDFDocumentProps {
 }
 
 export function PDFDocument({ data }: PDFDocumentProps) {
-  // Calcular precio sin IVA
-  const precioSinIVA = data.totales.subtotal;
-  const ivaAmount = data.totales.iva;
-  
   return (
     <Document>
       <Page size="A4" style={styles.page}>
@@ -300,10 +296,6 @@ export function PDFDocument({ data }: PDFDocumentProps) {
         {/* Totales */}
         <View style={styles.totalsContainer}>
           <View style={styles.totalsBox}>
-            <View style={styles.totalRow}>
-              <Text style={styles.totalLabel}>Precio sin IVA:</Text>
-              <Text style={styles.totalValue}>{formatearMoneda(precioSinIVA)}</Text>
-            </View>
             <View style={styles.totalRow}>
               <Text style={styles.totalLabel}>Subtotal:</Text>
               <Text style={styles.totalValue}>{formatearMoneda(data.totales.subtotal)}</Text>
