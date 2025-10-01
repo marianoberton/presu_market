@@ -1,6 +1,6 @@
 'use client';
 
-import { ProductoData, CALIDAD_OPTIONS, COLOR_OPTIONS, DEFAULT_PRODUCT_VALUES } from '@/lib/types';
+import { ProductoData, CALIDAD_OPTIONS, COLOR_OPTIONS, DEFAULT_PRODUCT_VALUES, TIPO_PRODUCTO_OPTIONS } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -19,6 +19,7 @@ export function ProductosForm({ productos, onChange }: ProductosFormProps) {
     const nuevoProducto: ProductoData = {
       id: generarIdProducto(),
       descripcion: '',
+      tipo: DEFAULT_PRODUCT_VALUES.tipo,
       largo: 0,
       ancho: 0,
       alto: 0,
@@ -43,13 +44,14 @@ export function ProductosForm({ productos, onChange }: ProductosFormProps) {
         const productoActualizado = { ...producto, [campo]: valor };
         
         // Recalcular precio unitario automáticamente cuando cambien las dimensiones, precio o remarcación
-        if (campo === 'largo' || campo === 'ancho' || campo === 'alto' || campo === 'precio' || campo === 'remarcacion') {
+        if (campo === 'largo' || campo === 'ancho' || campo === 'alto' || campo === 'precio' || campo === 'remarcacion' || campo === 'tipo') {
           productoActualizado.precioUnitario = calcularPrecioUnitario(
             productoActualizado.largo,
             productoActualizado.ancho,
             productoActualizado.alto,
             productoActualizado.precio,
-            productoActualizado.remarcacion
+            productoActualizado.remarcacion,
+            productoActualizado.tipo
           );
         }
         
@@ -109,6 +111,28 @@ export function ProductosForm({ productos, onChange }: ProductosFormProps) {
                     />
                   </div>
 
+                  {/* Tipo de Producto */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Tipo de Producto
+                    </label>
+                    <Select
+                      value={producto.tipo}
+                      onValueChange={(value) => actualizarProducto(producto.id, 'tipo', value)}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Seleccionar tipo" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {TIPO_PRODUCTO_OPTIONS.map((opcion) => (
+                          <SelectItem key={opcion.value} value={opcion.value}>
+                            {opcion.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
                   {/* Cantidad */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -122,7 +146,10 @@ export function ProductosForm({ productos, onChange }: ProductosFormProps) {
                       className="w-full"
                     />
                   </div>
+                </div>
 
+                {/* Segunda fila - Precio Unitario */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
                   {/* Precio Unitario */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -138,7 +165,7 @@ export function ProductosForm({ productos, onChange }: ProductosFormProps) {
                   </div>
                 </div>
 
-                {/* Segunda fila - Dimensiones */}
+                {/* Tercera fila - Dimensiones */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -178,24 +205,27 @@ export function ProductosForm({ productos, onChange }: ProductosFormProps) {
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Alto (cm)
-                    </label>
-                    <Input
-                      type="text"
-                      value={producto.alto === 0 ? '' : producto.alto.toString()}
-                      onChange={(e) => {
-                        const valor = e.target.value;
-                        if (valor === '' || /^\d*\.?\d*$/.test(valor)) {
-                          const numeroValor = valor === '' ? 0 : parseFloat(valor);
-                          actualizarProducto(producto.id, 'alto', isNaN(numeroValor) ? 0 : numeroValor);
-                        }
-                      }}
-                      placeholder="0.0"
-                      className="w-full"
-                    />
-                  </div>
+                  {/* Alto - Solo para cajas */}
+                  {producto.tipo === 'caja' && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Alto (cm)
+                      </label>
+                      <Input
+                        type="text"
+                        value={producto.alto === 0 ? '' : producto.alto.toString()}
+                        onChange={(e) => {
+                          const valor = e.target.value;
+                          if (valor === '' || /^\d*\.?\d*$/.test(valor)) {
+                            const numeroValor = valor === '' ? 0 : parseFloat(valor);
+                            actualizarProducto(producto.id, 'alto', isNaN(numeroValor) ? 0 : numeroValor);
+                          }
+                        }}
+                        placeholder="0.0"
+                        className="w-full"
+                      />
+                    </div>
+                  )}
 
                   {/* Calidad en Libras */}
                   <div>
@@ -258,6 +288,7 @@ export function ProductosForm({ productos, onChange }: ProductosFormProps) {
                     largo={producto.largo}
                     ancho={producto.ancho}
                     alto={producto.alto}
+                    tipo={producto.tipo}
                     precio={producto.precio}
                     remarcacion={producto.remarcacion}
                     onPrecioChange={(precio) => actualizarProducto(producto.id, 'precio', precio)}

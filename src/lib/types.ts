@@ -10,6 +10,7 @@ export interface ClienteData {
 export interface ProductoData {
   id: string;
   descripcion: string;
+  tipo: 'caja' | 'plancha';
   largo: number;
   ancho: number;
   alto: number;
@@ -53,6 +54,11 @@ export interface FormErrors {
 export const IVA_PERCENTAGE = 0.21;
 
 // Opciones por defecto para productos
+export const TIPO_PRODUCTO_OPTIONS = [
+  { value: 'caja', label: 'Caja' },
+  { value: 'plancha', label: 'Plancha de Cartón' }
+] as const;
+
 export const CALIDAD_OPTIONS = [
   "4mm 90lbs",
   "3mm 80lbs", 
@@ -68,6 +74,7 @@ export const COLOR_OPTIONS = [
 ];
 
 export const DEFAULT_PRODUCT_VALUES = {
+  tipo: 'caja' as const,
   calidad: "4mm 90lbs",
   color: "kraft",
   precio: 1000,

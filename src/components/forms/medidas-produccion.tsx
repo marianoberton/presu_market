@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { calcularMedidasProduccion } from '@/lib/calculations';
 
 interface MedidasProduccionProps {
   largo: number;
   ancho: number;
   alto: number;
+  tipo: 'caja' | 'plancha';
   precio: number;
   remarcacion: number;
   onPrecioChange: (precio: number) => void;
@@ -16,6 +18,7 @@ export const MedidasProduccion: React.FC<MedidasProduccionProps> = ({
   largo,
   ancho,
   alto,
+  tipo,
   precio,
   remarcacion,
   onPrecioChange,
@@ -34,45 +37,43 @@ export const MedidasProduccion: React.FC<MedidasProduccionProps> = ({
     setRemarcacionInput(remarcacion.toString());
   }, [remarcacion]);
 
-  // Cálculos de medidas de producción
-  const largoProduccion = largo * 2 + ancho * 2 + 50;
-  const anchoProduccion = ancho + alto;
-  const superficie = (largoProduccion * anchoProduccion) / 1000000;
+  // Cálculos de medidas de producción usando la función centralizada
+  const medidas = calcularMedidasProduccion(largo, ancho, alto, tipo);
 
   return (
     <Card className="p-4 bg-gray-50">
       <h4 className="font-semibold text-sm mb-3 text-gray-700">
-        Medidas de Producción
+        Medidas de Producción - {tipo === 'caja' ? 'Caja' : 'Plancha de Cartón'}
       </h4>
       
       <div className="grid grid-cols-3 gap-4 text-sm mb-4">
         <div className="text-center">
           <div className="text-xs text-gray-500 mb-1">Largo</div>
           <div className="font-medium text-blue-600">
-            {largoProduccion.toFixed(1)} cm
+            {medidas.largoProduccion.toFixed(1)} cm
           </div>
           <div className="text-xs text-gray-400 mt-1">
-            ({largo}×2 + {ancho}×2 + 50)
+            {tipo === 'caja' ? `(${largo}×2 + ${ancho}×2 + 50)` : `(${largo})`}
           </div>
         </div>
         
         <div className="text-center">
           <div className="text-xs text-gray-500 mb-1">Ancho</div>
           <div className="font-medium text-blue-600">
-            {anchoProduccion.toFixed(1)} cm
+            {medidas.anchoProduccion.toFixed(1)} cm
           </div>
           <div className="text-xs text-gray-400 mt-1">
-            ({ancho} + {alto})
+            {tipo === 'caja' ? `(${ancho} + ${alto})` : `(${ancho})`}
           </div>
         </div>
         
         <div className="text-center">
           <div className="text-xs text-gray-500 mb-1">Superficie</div>
           <div className="font-medium text-green-600">
-            {superficie.toFixed(4)} m²
+            {medidas.superficie.toFixed(4)} m²
           </div>
           <div className="text-xs text-gray-400 mt-1">
-            ({largoProduccion.toFixed(1)} × {anchoProduccion.toFixed(1)} ÷ 1M)
+            ({medidas.largoProduccion.toFixed(1)} × {medidas.anchoProduccion.toFixed(1)} ÷ 1M)
           </div>
         </div>
       </div>

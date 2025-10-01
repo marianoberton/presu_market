@@ -3,16 +3,30 @@ import { ProductoData, TotalesData, IVA_PERCENTAGE } from './types';
 /**
  * Calcula las medidas de producción basado en las dimensiones del producto
  */
-export function calcularMedidasProduccion(largo: number, ancho: number, alto: number) {
-  const largoProduccion = largo * 2 + ancho * 2 + 50;
-  const anchoProduccion = ancho + alto;
-  const superficie = (largoProduccion * anchoProduccion) / 1000000;
-  
-  return {
-    largoProduccion,
-    anchoProduccion,
-    superficie
-  };
+export function calcularMedidasProduccion(largo: number, ancho: number, alto: number, tipo: 'caja' | 'plancha' = 'caja') {
+  if (tipo === 'plancha') {
+    // Para planchas de cartón, solo se usa largo x ancho
+    const largoProduccion = largo;
+    const anchoProduccion = ancho;
+    const superficie = (largoProduccion * anchoProduccion) / 1000000;
+    
+    return {
+      largoProduccion,
+      anchoProduccion,
+      superficie
+    };
+  } else {
+    // Para cajas, se usa la fórmula original
+    const largoProduccion = largo * 2 + ancho * 2 + 50;
+    const anchoProduccion = ancho + alto;
+    const superficie = (largoProduccion * anchoProduccion) / 1000000;
+    
+    return {
+      largoProduccion,
+      anchoProduccion,
+      superficie
+    };
+  }
 }
 
 /**
@@ -23,12 +37,16 @@ export function calcularPrecioUnitario(
   ancho: number, 
   alto: number, 
   precio: number, 
-  remarcacion: number
+  remarcacion: number,
+  tipo: 'caja' | 'plancha' = 'caja'
 ): number {
-  if (!largo || !ancho || !alto || !precio || !remarcacion) return 0;
+  if (!largo || !ancho || !precio || !remarcacion) return 0;
+  
+  // Para cajas, el alto es requerido
+  if (tipo === 'caja' && !alto) return 0;
   
   // Calcular medidas de producción
-  const medidas = calcularMedidasProduccion(largo, ancho, alto);
+  const medidas = calcularMedidasProduccion(largo, ancho, alto, tipo);
   
   // Nueva fórmula: superficie × precio × remarcación
   const precioCalculado = medidas.superficie * precio * remarcacion;
