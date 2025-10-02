@@ -8,7 +8,7 @@ import { ProductosForm } from '@/components/forms/productos-form';
 import { TotalesDisplay } from '@/components/forms/totales-display';
 import { ClienteData, ProductoData, TotalesData, PresupuestoData, DEFAULT_CONDITIONS } from '@/lib/types';
 import { calcularTotales } from '@/lib/calculations';
-import { Download, FileText } from 'lucide-react';
+import { Download } from 'lucide-react';
 
 export default function Home() {
   const [datosCliente, setDatosCliente] = useState<ClienteData>({
@@ -59,23 +59,32 @@ export default function Home() {
       datosCliente?.telefono?.trim() !== '' &&
       datosCliente?.direccion?.trim() !== '' &&
       productos.length > 0 &&
-      productos.every(p => p.descripcion?.trim() !== '' && p.precio > 0)
+      productos.every(p => {
+        // Para productos polímero, solo requiere descripción
+        if (p.tipo === 'polimero') {
+          return p.descripcion?.trim() !== '';
+        }
+        // Para otros productos, requiere descripción y precio > 0
+        return p.descripcion?.trim() !== '' && p.precio > 0;
+      })
     );
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+      <header className="shadow-sm border-b" style={{backgroundColor: '#2E9FEF'}}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Market Paper</h1>
-              <p className="text-sm text-gray-600">Generador de Presupuestos</p>
-            </div>
-            <div className="flex items-center space-x-2">
-              <FileText className="h-5 w-5 text-blue-600" />
-              <span className="text-sm font-medium text-gray-700">Presupuesto Profesional</span>
+            <div className="flex items-center space-x-4">
+              <div className="bg-white p-2 rounded-lg">
+                <img 
+                  src="/MARKET-PAPER-LOGO-CURVAS_Mesa-de-trabajo-1-3-e1726845431314-1400x571 (1).png" 
+                  alt="Market Paper Logo" 
+                  className="h-8 w-auto"
+                />
+              </div>
+              <h1 className="text-lg font-bold text-white">Generador de presupuestos</h1>
             </div>
           </div>
         </div>
@@ -90,7 +99,7 @@ export default function Home() {
             onChange={setDatosCliente} 
           />
 
-          {/* Productos */}
+          {/* Items */}
           <ProductosForm 
             productos={productos} 
             onChange={setProductos} 
@@ -100,7 +109,7 @@ export default function Home() {
           <div className="flex justify-end">
             <div className="w-full max-w-md space-y-4">
               {/* Totales */}
-              <TotalesDisplay totales={totales} />
+              <TotalesDisplay totales={totales} productos={productos} />
 
               {/* Botón de Descarga */}
               <Button 

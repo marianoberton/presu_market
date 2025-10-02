@@ -10,7 +10,7 @@ export interface ClienteData {
 export interface ProductoData {
   id: string;
   descripcion: string;
-  tipo: 'caja' | 'plancha';
+  tipo: 'caja' | 'plancha' | 'polimero';
   largo: number;
   ancho: number;
   alto: number;
@@ -21,6 +21,9 @@ export interface ProductoData {
   remarcacion: number;
   precioUnitario: number;
   subtotal: number;
+  // Campos específicos para polímero
+  colores?: number; // Cantidad de colores para polímero
+  aCotizar?: boolean; // Indica si el precio es "A COTIZAR"
 }
 
 export interface CondicionesData {
@@ -56,14 +59,22 @@ export const IVA_PERCENTAGE = 0.21;
 // Opciones por defecto para productos
 export const TIPO_PRODUCTO_OPTIONS = [
   { value: 'caja', label: 'Caja' },
-  { value: 'plancha', label: 'Plancha de Cartón' }
+  { value: 'plancha', label: 'Plancha de Cartón' },
+  { value: 'polimero', label: 'Polímero (Matricería)' }
 ] as const;
 
 export const CALIDAD_OPTIONS = [
-  "4mm 90lbs",
-  "3mm 80lbs", 
-  "5mm 100lbs",
-  "6mm 120lbs"
+  "4 mm 90 lbs",
+  "4 mm 110 lbs",
+  "4 mm 130 lbs",
+  "4 mm 150 lbs",
+  "7 mm dt",
+  "7 mm dt ref",
+  "90 lbs 4 mm",
+  "150 lbs 4mm",
+  "4 mm",
+  "90",
+  "x unidad"
 ];
 
 export const COLOR_OPTIONS = [
@@ -73,9 +84,28 @@ export const COLOR_OPTIONS = [
   "marron"
 ];
 
+export const DESCRIPCION_OPTIONS = [
+  "Cajas de cartón corrugado.",
+  "Cajas de cartón corrugado. Aleta simpla onda c.",
+  "Cajas de cartón corrugado. Aleta cruzada inferior. Onda C.",
+  "Cajas de cartón corrugado. Aleta simple superior, aleta doble inferior. onda c.",
+  "Cajas de cartón corrugado. CON IMPRESIÓN.",
+  "Cajas de cartón corrugado. SIN IMPRESIÓN.",
+  "Cajas de cartón corrugado impresa, polimero disponible.",
+  "Plancha carton corrugado.",
+  "Plancha lisa carton corrugado.",
+  "Plancha trazada carton corrugado.",
+  "Vaso De Polipapel Kraft/Blanco Con Tapa.",
+  "Bolsas de papel kraft delivery.",
+  "CAJA CC (en varias medidas, indicando paquetes).",
+  "POLIMERO 1 COLOR / polimero un color.",
+  "POLIMERO 1 O 2 COLOR (ENVIAR ARCHIVO DE DISEÑO).",
+  "Sacabocado para troquelar."
+];
+
 export const DEFAULT_PRODUCT_VALUES = {
   tipo: 'caja' as const,
-  calidad: "4mm 90lbs",
+  calidad: "",
   color: "kraft",
   precio: 1000,
   remarcacion: 1.5
