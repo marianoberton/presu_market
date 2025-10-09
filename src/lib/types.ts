@@ -10,7 +10,7 @@ export interface ClienteData {
 export interface ProductoData {
   id: string;
   descripcion: string;
-  tipo: 'caja' | 'plancha' | 'polimero';
+  tipo: 'caja-aleta-simple' | 'plancha' | 'bandeja' | 'cerco' | 'caja-aleta-cruzada-x1' | 'caja-aleta-cruzada-x2' | 'base-telescopica' | 'tapa-telescopica' | 'polimero' | 'sacabocado';
   largo: number;
   ancho: number;
   alto: number;
@@ -30,6 +30,11 @@ export interface CondicionesData {
   condicionesPago: string;
   condicionesEntrega: string;
   validez: string;
+  // Campos para los desplegables
+  tipoPago?: 'echeq_15' | 'echeq_30' | 'echeq_45' | 'anticipo_50' | 'cta_cte_7' | 'cta_cte_30' | 'cta_cte_60' | 'texto_libre';
+  tipoEntrega?: 'produccion_15' | 'stock_48_72';
+  // Campo para texto libre de condiciones de pago
+  textoLibrePago?: string;
 }
 
 export interface TotalesData {
@@ -58,9 +63,16 @@ export const IVA_PERCENTAGE = 0.21;
 
 // Opciones por defecto para productos
 export const TIPO_PRODUCTO_OPTIONS = [
-  { value: 'caja', label: 'Caja' },
-  { value: 'plancha', label: 'Plancha de Cartón' },
-  { value: 'polimero', label: 'Polímero (Matricería)' }
+  { value: 'caja-aleta-simple', label: 'Caja aleta simple' },
+  { value: 'plancha', label: 'Plancha' },
+  { value: 'bandeja', label: 'Bandeja' },
+  { value: 'cerco', label: 'Cerco' },
+  { value: 'caja-aleta-cruzada-x1', label: 'Caja aleta cruzada x 1' },
+  { value: 'caja-aleta-cruzada-x2', label: 'Caja aleta cruzada x 2' },
+  { value: 'base-telescopica', label: 'Base telescópica' },
+  { value: 'tapa-telescopica', label: 'Tapa telescópica' },
+  { value: 'polimero', label: 'Polímero' },
+  { value: 'sacabocado', label: 'Sacabocado' }
 ] as const;
 
 export const CALIDAD_OPTIONS = [
@@ -104,16 +116,85 @@ export const DESCRIPCION_OPTIONS = [
 ];
 
 export const DEFAULT_PRODUCT_VALUES = {
-  tipo: 'caja' as const,
+  tipo: 'caja-aleta-simple' as const,
   calidad: "",
   color: "kraft",
   precio: 1000,
-  remarcacion: 1.5
+  remarcacion: 1
 };
 
 export const DEFAULT_CONDITIONS: CondicionesData = {
   condicionesPago: "50% anticipo por transferencia bancaria. Una vez acreditado el importe se toma el pedido. Enviar OC.\nEl resto del pago, 48 hs previo a la entrega. Una vez acreditado se coordina entrega.",
-  condicionesEntrega: "Presupuesto contempla una entrega CABA, por el total del presupuesto.\nDemora producción 15 días aprox. Pedir contemplando esta anticipación.\nLa mercadería se entrega palletizada.\nEnvíos al interior: Entregamos en el transporte que ustedes trabajen dentro del radio de CABA.",
+  condicionesEntrega: "Demora producción 15 días aprox.\nLa mercadería se entrega palletizada. Debe contar con personal para la descarga.\nEnvíos al interior. Entregamos en el transporte que ustedes trabajen dentro del radio de CABA.",
+  validez: "El presente presupuesto tiene una validez de 48 hs desde su emisión, vencido ese plazo se vuelve a cotizar.",
+  // Valores por defecto para los nuevos campos
+  tipoPago: 'anticipo_50',
+  tipoEntrega: 'produccion_15'
+};
+
+// Opciones para condiciones de pago
+export const CONDICIONES_PAGO_OPTIONS = [
+  {
+    value: 'echeq_15',
+    label: 'E-cheqs a 15 días',
+    texto: '48 hs previo a la entrega con eCheqs a 15 días. Enviar OC. Una vez acreditado se coordina entrega.'
+  },
+  {
+    value: 'echeq_30',
+    label: 'E-cheqs a 30 días',
+    texto: '48 hs previo a la entrega con eCheqs a 30 días. Enviar OC. Una vez acreditado se coordina entrega.'
+  },
+  {
+    value: 'echeq_45',
+    label: 'E-cheqs a 45 días',
+    texto: '48 hs previo a la entrega con eCheqs a 45 días. Enviar OC. Una vez acreditado se coordina entrega.'
+  },
+  {
+    value: 'anticipo_50',
+    label: '50% anticipo + resto previo entrega',
+    texto: '50 % anticipo por transferencia bancaria. Una vez acreditado el importe se toma el pedido. Enviar OC. El resto del pago, 48 hs previo a la entrega. Una vez acreditado se coordina entrega.'
+  },
+  {
+    value: 'cta_cte_7',
+    label: 'Cuenta corriente 7 días',
+    texto: 'Cuenta corriente a 7 días por transferencia bancaria.'
+  },
+  {
+    value: 'cta_cte_30',
+    label: 'Cuenta corriente 30 días',
+    texto: 'Cuenta corriente a 30 días por transferencia bancaria.'
+  },
+  {
+    value: 'cta_cte_60',
+    label: 'Cuenta corriente 60 días',
+    texto: 'Cuenta corriente a 60 días por transferencia bancaria.'
+  },
+  {
+    value: 'texto_libre',
+    label: 'Texto personalizado',
+    texto: ''
+  }
+];
+
+// Opciones para condiciones de entrega
+export const CONDICIONES_ENTREGA_OPTIONS = [
+  {
+    value: 'produccion_15',
+    label: 'Producción 15 días',
+    texto: 'Demora producción 15 días aprox.'
+  },
+  {
+    value: 'stock_48_72',
+    label: 'Stock disponible 48-72hs',
+    texto: 'Stock disponible, entrega dentro de 48/72 hs desde acreditado el importe.'
+  }
+];
+
+// Condiciones fijas que se agregan automáticamente
+export const CONDICIONES_FIJAS = {
+  entregaCABA: "Presupuesto contempla una entrega CABA, por el total del presupuesto.",
+  entregaPalletizada: "La mercadería se entrega palletizada.",
+  enviosInterior: "Envíos al interior: Entregamos en el transporte que ustedes trabajen dentro del radio de CABA.",
   validez: "El presente presupuesto tiene una validez de 48 hs desde su emisión, vencido ese plazo se vuelve a cotizar."
 };
 

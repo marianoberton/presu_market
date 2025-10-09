@@ -25,7 +25,7 @@ export function ProductosForm({ productos, onChange }: ProductosFormProps) {
       alto: 0,
       calidad: DEFAULT_PRODUCT_VALUES.calidad,
       color: DEFAULT_PRODUCT_VALUES.color,
-      cantidad: 1,
+      cantidad: 0,
       precio: DEFAULT_PRODUCT_VALUES.precio,
       remarcacion: DEFAULT_PRODUCT_VALUES.remarcacion,
       precioUnitario: 0,
@@ -45,34 +45,56 @@ export function ProductosForm({ productos, onChange }: ProductosFormProps) {
       if (producto.id === id) {
         const productoActualizado = { ...producto, [campo]: valor };
         
-        // Lógica especial para polímero
-        if (campo === 'tipo' && valor === 'polimero') {
-          productoActualizado.cantidad = 1; // Cantidad fija en 1
-          productoActualizado.aCotizar = true; // Marcar como "A COTIZAR"
-          productoActualizado.precio = 0; // Precio en 0 porque es a cotizar
+        // Lógica especial para polímero y sacabocado
+        if (campo === 'tipo' && (valor === 'polimero' || valor === 'sacabocado')) {
+          // No fijar cantidad en 1 - permitir cantidad variable
+          // No establecer automáticamente aCotizar ni precio - permitir control manual
           productoActualizado.colores = productoActualizado.colores || 1; // Default 1 color
-        } else if (campo === 'tipo' && valor !== 'polimero') {
+        } else if (campo === 'tipo' && valor !== 'polimero' && valor !== 'sacabocado') {
           productoActualizado.aCotizar = false; // Desmarcar "A COTIZAR"
         }
         
-        // Recalcular precio unitario automáticamente cuando cambien las dimensiones, precio o remarcación
-        // Pero no para productos "A COTIZAR"
-        if (!productoActualizado.aCotizar && (campo === 'largo' || campo === 'ancho' || campo === 'alto' || campo === 'precio' || campo === 'remarcacion' || campo === 'tipo')) {
-          productoActualizado.precioUnitario = calcularPrecioUnitario(
-            productoActualizado.largo,
-            productoActualizado.ancho,
-            productoActualizado.alto,
-            productoActualizado.precio,
-            productoActualizado.remarcacion,
-            productoActualizado.tipo
-          );
-        }
-        
-        // Recalcular subtotal automáticamente (solo si no es "A COTIZAR")
-        if (!productoActualizado.aCotizar) {
-          productoActualizado.subtotal = calcularSubtotalProducto(productoActualizado.cantidad, productoActualizado.precioUnitario);
+        // Solo recalcular precio unitario y subtotal si NO estamos actualizando el campo aCotizar
+        if (campo !== 'aCotizar') {
+          // Para productos polímero y sacabocado, el precio manual ES el precio unitario
+          if (productoActualizado.tipo === 'polimero' || productoActualizado.tipo === 'sacabocado') {
+            if (campo === 'precio') {
+              productoActualizado.precioUnitario = Number(valor);
+            }
+          } else {
+            // Recalcular precio unitario automáticamente cuando cambien las dimensiones, precio o remarcación
+            // Pero no para productos "A COTIZAR"
+            if (!productoActualizado.aCotizar && (campo === 'largo' || campo === 'ancho' || campo === 'alto' || campo === 'precio' || campo === 'remarcacion' || campo === 'tipo')) {
+              // Recalcular precio unitario automáticamente
+              productoActualizado.precioUnitario = calcularPrecioUnitario(
+                productoActualizado.largo,
+                productoActualizado.ancho,
+                productoActualizado.alto,
+                productoActualizado.precio,
+                productoActualizado.remarcacion,
+                productoActualizado.tipo
+              );
+            }
+          }
+          
+          // Recalcular subtotal automáticamente (solo si no es "A COTIZAR")
+          if (!productoActualizado.aCotizar) {
+            productoActualizado.subtotal = calcularSubtotalProducto(productoActualizado.cantidad, productoActualizado.precioUnitario);
+          } else {
+            productoActualizado.subtotal = 0; // Subtotal 0 para productos "A COTIZAR"
+          }
         } else {
-          productoActualizado.subtotal = 0; // Subtotal 0 para productos "A COTIZAR"
+          // Si estamos actualizando aCotizar, solo ajustamos el subtotal
+          if (productoActualizado.aCotizar) {
+            productoActualizado.subtotal = 0; // Subtotal 0 para productos "A COTIZAR"
+          } else {
+            // Si se desmarca aCotizar, recalcular subtotal
+            if (productoActualizado.tipo === 'polimero' || productoActualizado.tipo === 'sacabocado') {
+              productoActualizado.subtotal = productoActualizado.precio * productoActualizado.cantidad;
+            } else {
+              productoActualizado.subtotal = calcularSubtotalProducto(productoActualizado.cantidad, productoActualizado.precioUnitario);
+            }
+          }
         }
         
         return productoActualizado;
@@ -173,18 +195,12 @@ export function ProductosForm({ productos, onChange }: ProductosFormProps) {
                         const valor = e.target.value;
                         // Permitir solo números positivos
                         if (valor === '' || /^\d+$/.test(valor)) {
-                          actualizarProducto(producto.id, 'cantidad', parseInt(valor) || 1);
+                          actualizarProducto(producto.id, 'cantidad', parseInt(valor) || 0);
                         }
                       }}
                       className="w-full"
-                      placeholder="1"
-                      disabled={producto.tipo === 'polimero'} // Deshabilitado para polímero
+                      placeholder="0"
                     />
-                    {producto.tipo === 'polimero' && (
-                      <p className="text-xs text-gray-500 mt-1">
-                        Cantidad fija en 1 para polímero (matricería)
-                      </p>
-                    )}
                   </div>
 
                   {/* Campo específico para polímero: Cantidad de colores */}
@@ -211,34 +227,130 @@ export function ProductosForm({ productos, onChange }: ProductosFormProps) {
                   )}
                 </div>
 
-                {/* Segunda fila - Precio Unitario */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
-                  {/* Precio Unitario */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      {producto.tipo === 'polimero' ? 'Precio (A Cotizar)' : 'Precio Unitario (Calculado Automáticamente)'}
-                    </label>
-                    <Input
-                      type="text"
-                      value={producto.tipo === 'polimero' ? 'A COTIZAR' : formatearMoneda(producto.precioUnitario)}
-                      readOnly
-                      className="w-full bg-gray-100 cursor-not-allowed"
-                      placeholder={producto.tipo === 'polimero' ? 'A cotizar' : 'Se calcula automáticamente'}
-                    />
-                    {producto.tipo === 'polimero' && (
-                      <p className="text-xs text-gray-500 mt-1">
-                        El precio del polímero se cotiza según la complejidad del diseño
-                      </p>
+                {/* Segunda fila - Precio y configuración para polímero y sacabocado */}
+                {(producto.tipo === 'polimero' || producto.tipo === 'sacabocado') && (
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
+                    {/* Precio Manual */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Precio Manual ($)
+                      </label>
+                      <Input
+                        type="text"
+                        value={producto.precio === 0 ? '' : producto.precio.toString()}
+                        onChange={(e) => {
+                          const valor = parseFloat(e.target.value) || 0;
+                          actualizarProducto(producto.id, 'precio', valor);
+                        }}
+                        placeholder="0.00"
+                        className="w-full"
+                        disabled={producto.aCotizar}
+                      />
+                    </div>
+
+                    {/* Checkbox A Cotizar */}
+                    <div className="flex items-center space-x-2 mt-6">
+                      <input
+                        type="checkbox"
+                        id={`cotizar-${producto.id}`}
+                        checked={producto.aCotizar || false}
+                        onChange={(e) => {
+                          actualizarProducto(producto.id, 'aCotizar', e.target.checked);
+                          // NO ponemos el precio en 0 automáticamente - dejamos que el usuario mantenga su precio manual
+                        }}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      />
+                      <label htmlFor={`cotizar-${producto.id}`} className="text-sm font-medium text-gray-700">
+                        A Cotizar
+                      </label>
+                    </div>
+
+                    {/* Precio Unitario (mostrar resultado) */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Precio Unitario
+                      </label>
+                      <Input
+                        type="text"
+                        value={producto.aCotizar ? 'A COTIZAR' : formatearMoneda(producto.precio)}
+                        readOnly
+                        className="w-full bg-gray-100 cursor-not-allowed"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Segunda fila - Precio $/m² y Remarcación para otros productos */}
+                {producto.tipo !== 'polimero' && producto.tipo !== 'sacabocado' && (
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
+                    {/* Precio $/m² */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Precio $/m²
+                      </label>
+                      <Input
+                        type="text"
+                        value={producto.precio === 0 ? '' : producto.precio.toString()}
+                        onChange={(e) => {
+                          const valor = parseFloat(e.target.value) || 0;
+                          actualizarProducto(producto.id, 'precio', valor);
+                        }}
+                        placeholder="0.00"
+                        className="w-full"
+                      />
+                    </div>
+
+                    {/* Remarcación */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Remarcación
+                      </label>
+                      <Input
+                        type="text"
+                        value={producto.remarcacion === 0 ? '' : producto.remarcacion.toString()}
+                        onChange={(e) => {
+                          const valor = e.target.value;
+                          if (valor === '' || /^\d*\.?\d*$/.test(valor)) {
+                            const numeroValor = valor === '' ? 0 : parseFloat(valor);
+                            actualizarProducto(producto.id, 'remarcacion', isNaN(numeroValor) ? 0 : numeroValor);
+                          }
+                        }}
+                        placeholder="1"
+                        className="w-full"
+                      />
+                    </div>
+
+                    {/* Precio Unitario Calculado - Solo mostrar cuando todos los campos estén completos */}
+                    {(() => {
+                      const tieneTodasLasDimensiones = producto.largo > 0 && producto.ancho > 0 && 
+                        (['plancha', 'polimero', 'sacabocado'].includes(producto.tipo) || producto.alto > 0);
+                      const tieneCalidad = producto.calidad && producto.calidad.trim() !== '';
+                      const tienePrecio = producto.precio > 0;
+                      
+                      return tieneTodasLasDimensiones && tieneCalidad && tienePrecio;
+                    })() && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Precio Unitario (Calculado Automáticamente)
+                        </label>
+                        <Input
+                          type="text"
+                          value={formatearMoneda(producto.precioUnitario)}
+                          readOnly
+                          className="w-full bg-gray-100 cursor-not-allowed"
+                          placeholder="Se calcula automáticamente"
+                        />
+                      </div>
                     )}
                   </div>
-                </div>
+                )}
 
-                {/* Tercera fila - Dimensiones (Solo para productos que no son polímero) */}
-                {producto.tipo !== 'polimero' && (
+                {/* Tercera fila - Dimensiones (Solo para productos que no son polímero ni sacabocado) */}
+                {producto.tipo !== 'polimero' && producto.tipo !== 'sacabocado' && (
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Largo (cm)
+                        Largo (mm)
                       </label>
                       <Input
                         type="text"
@@ -257,7 +369,7 @@ export function ProductosForm({ productos, onChange }: ProductosFormProps) {
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Ancho (cm)
+                        Ancho (mm)
                       </label>
                       <Input
                         type="text"
@@ -274,11 +386,11 @@ export function ProductosForm({ productos, onChange }: ProductosFormProps) {
                       />
                     </div>
 
-                    {/* Alto - Solo para cajas */}
-                    {producto.tipo === 'caja' && (
+                    {/* Alto - Solo para productos que no sean plancha, polímero o sacabocado */}
+                    {!['plancha', 'polimero', 'sacabocado'].includes(producto.tipo) && (
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Alto (cm)
+                          Alto (mm)
                         </label>
                         <Input
                           type="text"
@@ -338,26 +450,11 @@ export function ProductosForm({ productos, onChange }: ProductosFormProps) {
                         </SelectContent>
                       </Select>
                     </div>
-
-                    {/* Subtotal */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Subtotal
-                      </label>
-                      <div className="px-3 py-2 bg-gray-100 border rounded-md text-right font-medium">
-                        {(producto.tipo as 'caja' | 'plancha' | 'polimero') === 'polimero' ? 'A COTIZAR' : formatearMoneda(producto.subtotal)}
-                      </div>
-                      {(producto.tipo as 'caja' | 'plancha' | 'polimero') === 'polimero' && (
-                        <p className="text-xs text-gray-500 mt-1">
-                          No se incluye en el total del presupuesto
-                        </p>
-                      )}
-                    </div>
                   </div>
                 )}
 
-                {/* Subtotal para productos polímero (mostrar por separado) */}
-                {(producto.tipo as 'caja' | 'plancha' | 'polimero') === 'polimero' && (
+                {/* Cuarta fila - Subtotal */}
+                {producto.tipo !== 'polimero' && producto.tipo !== 'sacabocado' && (
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
                     <div></div> {/* Espaciador */}
                     <div></div> {/* Espaciador */}
@@ -368,32 +465,48 @@ export function ProductosForm({ productos, onChange }: ProductosFormProps) {
                         Subtotal
                       </label>
                       <div className="px-3 py-2 bg-gray-100 border rounded-md text-right font-medium">
-                        A COTIZAR
+                        {formatearMoneda(producto.subtotal)}
                       </div>
-                      <p className="text-xs text-gray-500 mt-1">
-                        No se incluye en el total del presupuesto
-                      </p>
                     </div>
                   </div>
                 )}
 
-                {/* Medidas de Producción - Solo para productos que no son polímero */}
-                {producto.tipo !== 'polimero' && (
-                  <div className="mt-4">
-                    <MedidasProduccion 
-                      largo={producto.largo}
-                      ancho={producto.ancho}
-                      alto={producto.alto}
-                      tipo={producto.tipo}
-                      precio={producto.precio}
-                      remarcacion={producto.remarcacion}
-                      onPrecioChange={(precio) => actualizarProducto(producto.id, 'precio', precio)}
-                      onRemarcacionChange={(remarcacion) => actualizarProducto(producto.id, 'remarcacion', remarcacion)}
-                    />
+                {/* Subtotal para productos polímero y sacabocado */}
+                {(producto.tipo === 'polimero' || producto.tipo === 'sacabocado') && (
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
+                    <div></div> {/* Espaciador */}
+                    <div></div> {/* Espaciador */}
+                    <div></div> {/* Espaciador */}
+                    {/* Subtotal */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Subtotal
+                      </label>
+                      <div className="px-3 py-2 bg-gray-100 border rounded-md text-right font-medium">
+                        {producto.aCotizar ? 'A COTIZAR' : formatearMoneda(producto.precio * producto.cantidad)}
+                      </div>
+                      {producto.aCotizar && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          No se incluye en el total del presupuesto
+                        </p>
+                      )}
+                    </div>
                   </div>
                 )}
-              </div>
-            ))}
+
+                  {/* Medidas de Producción - Solo para productos que no son polímero ni sacabocado */}
+                  {producto.tipo !== 'polimero' && producto.tipo !== 'sacabocado' && (
+                    <div className="mt-4">
+                      <MedidasProduccion 
+                        largo={producto.largo}
+                        ancho={producto.ancho}
+                        alto={producto.alto}
+                        tipo={producto.tipo}
+                      />
+                    </div>
+                  )}
+                </div>
+              ))}
             
             {/* Botón para agregar más items al final de la lista */}
             <div className="flex justify-center pt-4">

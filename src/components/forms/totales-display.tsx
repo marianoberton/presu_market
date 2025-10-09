@@ -23,21 +23,21 @@ export function TotalesDisplay({ totales, productos }: TotalesDisplayProps) {
               <div className="text-sm font-medium text-gray-700 mb-2">Desglose por Item:</div>
               <div className="space-y-1 max-h-32 overflow-y-auto">
                 {productos.map((producto, index) => (
-                  <div key={producto.id} className="flex justify-between items-center text-xs text-gray-600 py-1">
-                    <span className="truncate max-w-[200px]">
+                  <div key={producto.id} className="flex justify-between items-start text-xs text-gray-600 py-1 gap-2">
+                    <span className="flex-1 leading-relaxed">
                       {index + 1}. {producto.descripcion || 'Sin descripción'} (x{producto.cantidad})
-                      {producto.tipo === 'polimero' && (
+                      {producto.aCotizar && (
                         <span className="text-orange-600 font-medium ml-1">(A COTIZAR)</span>
                       )}
                     </span>
-                    <span className="font-medium ml-2">
-                      {producto.tipo === 'polimero' ? 'A COTIZAR' : formatearMoneda(producto.subtotal)}
+                    <span className="font-medium whitespace-nowrap">
+                      {producto.aCotizar ? 'A COTIZAR' : formatearMoneda(producto.subtotal)}
                     </span>
                   </div>
                 ))}
               </div>
               <div className="border-t border-gray-200 mt-2 pt-2"></div>
-              {productos.some(p => p.tipo === 'polimero') && (
+              {productos.some(p => p.aCotizar) && (
                 <div className="text-xs text-orange-600 mt-1">
                   * Los productos &quot;A COTIZAR&quot; no se incluyen en el total del presupuesto
                 </div>

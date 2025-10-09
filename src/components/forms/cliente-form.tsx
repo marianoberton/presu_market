@@ -3,6 +3,7 @@
 import { ClienteData } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 interface ClienteFormProps {
   data: ClienteData;
@@ -28,7 +29,17 @@ export function ClienteForm({ data, onChange }: ClienteFormProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">Datos del Cliente</CardTitle>
+        <div className="flex justify-between items-center">
+          <CardTitle className="text-lg">Datos del Cliente</CardTitle>
+          <Button variant="outline" size="sm" className="flex items-center gap-2">
+             <img 
+               src="/hubspot-1.svg" 
+               alt="HubSpot" 
+               className="h-4 w-4"
+             />
+             Seleccionar Cliente
+           </Button>
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -1,9 +1,9 @@
 "use client";
 
-import { CondicionesData } from "@/lib/types";
+import { CondicionesData, CONDICIONES_PAGO_OPTIONS, CONDICIONES_ENTREGA_OPTIONS, CONDICIONES_FIJAS } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useEffect } from "react";
 
 interface CondicionesFormProps {
   data: CondicionesData;
@@ -11,56 +11,107 @@ interface CondicionesFormProps {
 }
 
 export function CondicionesForm({ data, onChange }: CondicionesFormProps) {
-  const handleChange = (field: keyof CondicionesData, value: string) => {
+  
+  // Función para generar el texto completo de condiciones comerciales
+  const generarTextoCompleto = (tipoPago: string, tipoEntrega: string) => {
+    const opcionPago = CONDICIONES_PAGO_OPTIONS.find(opt => opt.value === tipoPago);
+    const opcionEntrega = CONDICIONES_ENTREGA_OPTIONS.find(opt => opt.value === tipoEntrega);
+    
+    if (!opcionPago || !opcionEntrega) return;
+
+    // Generar texto de condiciones de pago
+    const textoPago = opcionPago.texto;
+
+    // Generar texto de condiciones de entrega
+    const textoEntrega = [
+      opcionEntrega.texto,
+      CONDICIONES_FIJAS.entregaCABA,
+      CONDICIONES_FIJAS.entregaPalletizada,
+      CONDICIONES_FIJAS.enviosInterior
+    ].join('\n');
+
+    // Actualizar los datos
     onChange({
       ...data,
-      [field]: value
+      condicionesPago: textoPago,
+      condicionesEntrega: textoEntrega,
+      validez: CONDICIONES_FIJAS.validez,
+      tipoPago: tipoPago as CondicionesData['tipoPago'],
+      tipoEntrega: tipoEntrega as CondicionesData['tipoEntrega']
     });
   };
+
+  const handlePagoChange = (tipoPago: string) => {
+    if (data.tipoEntrega) {
+      generarTextoCompleto(tipoPago, data.tipoEntrega);
+    } else {
+      onChange({
+        ...data,
+        tipoPago: tipoPago as CondicionesData['tipoPago']
+      });
+    }
+  };
+
+  const handleEntregaChange = (tipoEntrega: string) => {
+    if (data.tipoPago) {
+      generarTextoCompleto(data.tipoPago, tipoEntrega);
+    } else {
+      onChange({
+        ...data,
+        tipoEntrega: tipoEntrega as CondicionesData['tipoEntrega']
+      });
+    }
+  };
+
+  // Generar texto automáticamente cuando ambos desplegables tienen valor
+  useEffect(() => {
+    if (data.tipoPago && data.tipoEntrega) {
+      generarTextoCompleto(data.tipoPago, data.tipoEntrega);
+    }
+  }, [data.tipoPago, data.tipoEntrega]);
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">Condiciones Comerciales</CardTitle>
+        <CardTitle className="text-lg">Condiciones</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div>
-          <label htmlFor="condicionesPago" className="block text-sm font-medium text-gray-700 mb-1">
+      <CardContent className="space-y-3 pb-4">
+        {/* Condiciones de Pago */}
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-700">
             Condiciones de Pago
           </label>
-          <Textarea
-            id="condicionesPago"
-            placeholder="Condiciones de pago..."
-            value={data.condicionesPago}
-            onChange={(e) => handleChange('condicionesPago', e.target.value)}
-            rows={3}
-          />
+          <Select value={data.tipoPago || ""} onValueChange={handlePagoChange}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Seleccionar condición de pago" />
+            </SelectTrigger>
+            <SelectContent>
+              {CONDICIONES_PAGO_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
-        <div>
-          <label htmlFor="condicionesEntrega" className="block text-sm font-medium text-gray-700 mb-1">
+        {/* Condiciones de Entrega */}
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-700">
             Condiciones de Entrega
           </label>
-          <Textarea
-            id="condicionesEntrega"
-            placeholder="Condiciones de entrega..."
-            value={data.condicionesEntrega}
-            onChange={(e) => handleChange('condicionesEntrega', e.target.value)}
-            rows={3}
-          />
-        </div>
-
-        <div>
-          <label htmlFor="validez" className="block text-sm font-medium text-gray-700 mb-1">
-            Validez del Presupuesto
-          </label>
-          <Input
-            id="validez"
-            type="text"
-            placeholder="Validez del presupuesto..."
-            value={data.validez}
-            onChange={(e) => handleChange('validez', e.target.value)}
-          />
+          <Select value={data.tipoEntrega || ""} onValueChange={handleEntregaChange}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Seleccionar condición de entrega" />
+            </SelectTrigger>
+            <SelectContent>
+              {CONDICIONES_ENTREGA_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </CardContent>
     </Card>

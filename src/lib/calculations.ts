@@ -1,68 +1,110 @@
 import { ProductoData, TotalesData, IVA_PERCENTAGE } from './types';
 
 /**
- * Calcula las medidas de producción basado en las dimensiones del producto
+ * Calcula las medidas de producción basado en las dimensiones del producto y tipo de caja
  */
-export function calcularMedidasProduccion(largo: number, ancho: number, alto: number, tipo: 'caja' | 'plancha' | 'polimero' = 'caja') {
-  if (tipo === 'polimero') {
-    // Para polímeros, no se calculan medidas de producción
+export function calcularMedidasProduccion(
+  largo: number, 
+  ancho: number, 
+  alto: number, 
+  tipo: 'caja-aleta-simple' | 'plancha' | 'bandeja' | 'cerco' | 'caja-aleta-cruzada-x1' | 'caja-aleta-cruzada-x2' | 'base-telescopica' | 'tapa-telescopica' | 'polimero' | 'sacabocado' = 'caja-aleta-simple'
+) {
+  if (tipo === 'polimero' || tipo === 'sacabocado') {
+    // Para polímero y sacabocado, no se calculan medidas de producción especiales
     return {
-      largoProduccion: 0,
-      anchoProduccion: 0,
-      superficie: 0
-    };
-  } else if (tipo === 'plancha') {
-    // Para planchas de cartón, solo se usa largo x ancho
-    const largoProduccion = largo;
-    const anchoProduccion = ancho;
-    const superficie = (largoProduccion * anchoProduccion) / 1000000;
-    
-    return {
-      largoProduccion,
-      anchoProduccion,
-      superficie
-    };
-  } else {
-    // Para cajas, se usa la fórmula original
-    const largoProduccion = largo * 2 + ancho * 2 + 50;
-    const anchoProduccion = ancho + alto;
-    const superficie = (largoProduccion * anchoProduccion) / 1000000;
-    
-    return {
-      largoProduccion,
-      anchoProduccion,
-      superficie
+      largoProduccion: largo,
+      anchoProduccion: ancho,
+      superficie: (largo * ancho) / 10000 // Convertir de cm² a m²
     };
   }
+
+  if (tipo === 'plancha') {
+    // Para planchas, las medidas son las mismas
+    return {
+      largoProduccion: largo,
+      anchoProduccion: ancho,
+      superficie: (largo * ancho) / 10000 // Convertir de cm² a m²
+    };
+  }
+
+  // Cálculos específicos según el tipo de producto
+  let largoProduccion: number;
+  let anchoProduccion: number;
+
+  switch (tipo) {
+    case 'caja-aleta-simple':
+      // Fórmula corregida: +40 largo +50 ancho
+      largoProduccion = largo + 40;
+      anchoProduccion = ancho + 50;
+      break;
+    
+    case 'bandeja':
+      // Fórmula de bandejas cartón
+      largoProduccion = largo + 2 * alto + 30;
+      anchoProduccion = ancho + 2 * alto;
+      break;
+    
+    case 'cerco':
+      // Fórmula de cerco de cartón
+      largoProduccion = 2 * (largo - 10) + 2 * (ancho - 10) + 40;
+      anchoProduccion = ancho + alto;
+      break;
+    
+    case 'caja-aleta-cruzada-x1':
+      // Fórmula de aleta cruzada 1 lado
+      largoProduccion = 2 * largo + 2 * ancho + 40;
+      anchoProduccion = ancho + 0.5 * ancho + alto - 10;
+      break;
+    
+    case 'caja-aleta-cruzada-x2':
+      // Fórmula de aleta cruzada ambos lados
+      largoProduccion = 2 * largo + 2 * ancho + 40;
+      anchoProduccion = 2 * ancho + largo - 20;
+      break;
+    
+    case 'base-telescopica':
+    case 'tapa-telescopica':
+      // Fórmula para base y tapa telescópica
+      largoProduccion = 2 * largo + 2 * ancho + 50;
+      anchoProduccion = 0.5 * ancho + alto;
+      break;
+    
+    default:
+      // Fórmula por defecto (caja aleta simple)
+      largoProduccion = 2 * largo + 2 * ancho + 50;
+      anchoProduccion = ancho + alto;
+      break;
+  }
+  
+  const superficie = (largoProduccion * anchoProduccion) / 1000000;
+  
+  return {
+    largoProduccion,
+    anchoProduccion,
+    superficie
+  };
+  
+  // Fallback para casos no contemplados
+  return {
+    largoProduccion: 0,
+    anchoProduccion: 0,
+    superficie: 0
+  };
 }
 
 /**
  * Calcula el precio unitario basado en superficie, precio por m² y remarcación
  */
 export function calcularPrecioUnitario(
-  largo: number, 
-  ancho: number, 
-  alto: number, 
-  precio: number, 
-  remarcacion: number,
-  tipo: 'caja' | 'plancha' | 'polimero' = 'caja'
-): number {
-  if (!largo || !ancho || !precio || !remarcacion) return 0;
-  
-  // Para polímeros, no se calcula precio unitario automáticamente
-  if (tipo === 'polimero') return 0;
-  
-  // Para cajas, el alto es requerido
-  if (tipo === 'caja' && !alto) return 0;
-  
-  // Calcular medidas de producción
+  largo: number,
+  ancho: number,
+  alto: number,
+  precio: number,
+  remarcacion: number = 1,
+  tipo: 'caja-aleta-simple' | 'plancha' | 'bandeja' | 'cerco' | 'caja-aleta-cruzada-x1' | 'caja-aleta-cruzada-x2' | 'base-telescopica' | 'tapa-telescopica' | 'polimero' | 'sacabocado' = 'caja-aleta-simple'
+) {
   const medidas = calcularMedidasProduccion(largo, ancho, alto, tipo);
-  
-  // Nueva fórmula: superficie × precio × remarcación
-  const precioCalculado = medidas.superficie * precio * remarcacion;
-  
-  // Redondear a 2 decimales
-  return Math.round(precioCalculado * 100) / 100;
+  return medidas.superficie * precio * remarcacion;
 }
 
 /**
@@ -123,6 +165,75 @@ export function esNumeroValido(valor: number): boolean {
 /**
  * Genera un ID único para productos
  */
+// Función para generar labels explicativas de los cálculos
+export function generarLabelsCalculos(
+  largo: number,
+  ancho: number,
+  alto: number,
+  tipo: 'caja-aleta-simple' | 'plancha' | 'bandeja' | 'cerco' | 'caja-aleta-cruzada-x1' | 'caja-aleta-cruzada-x2' | 'base-telescopica' | 'tapa-telescopica' | 'polimero' | 'sacabocado'
+) {
+  if (tipo === 'polimero' || tipo === 'sacabocado') {
+    return {
+      largoLabel: `${largo} cm`,
+      anchoLabel: `${ancho} cm`
+    };
+  }
+
+  if (tipo === 'plancha') {
+    return {
+      largoLabel: `${largo} cm`,
+      anchoLabel: `${ancho} cm`
+    };
+  }
+
+  // Generar labels específicos según el tipo de producto
+  let largoLabel: string;
+  let anchoLabel: string;
+
+  switch (tipo) {
+    case 'caja-aleta-simple':
+      largoLabel = `(${largo} + 40)`;
+      anchoLabel = `(${ancho} + 50)`;
+      break;
+    
+    case 'bandeja':
+      largoLabel = `(${largo} + ${alto}×2 + 30)`;
+      anchoLabel = `(${ancho} + ${alto}×2)`;
+      break;
+    
+    case 'cerco':
+      largoLabel = `(2×(${largo} - 10) + 2×(${ancho} - 10) + 40)`;
+      anchoLabel = `(${ancho} + ${alto})`;
+      break;
+    
+    case 'caja-aleta-cruzada-x1':
+      largoLabel = `(${largo}×2 + ${ancho}×2 + 40)`;
+      anchoLabel = `(${ancho} + ${ancho}×0.5 + ${alto} - 10)`;
+      break;
+    
+    case 'caja-aleta-cruzada-x2':
+      largoLabel = `(${largo}×2 + ${ancho}×2 + 40)`;
+      anchoLabel = `(${ancho}×2 + ${largo} - 20)`;
+      break;
+    
+    case 'base-telescopica':
+    case 'tapa-telescopica':
+      largoLabel = `(${largo}×2 + ${ancho}×2 + 50)`;
+      anchoLabel = `(${ancho}×0.5 + ${alto})`;
+      break;
+    
+    default:
+      largoLabel = `(${largo}×2 + ${ancho}×2 + 50)`;
+      anchoLabel = `(${ancho} + ${alto})`;
+      break;
+  }
+
+  return {
+    largoLabel,
+    anchoLabel
+  };
+}
+
 export function generarIdProducto(): string {
   return `producto_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 }
