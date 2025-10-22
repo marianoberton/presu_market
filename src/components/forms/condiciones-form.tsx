@@ -69,7 +69,7 @@ export function CondicionesForm({ data, onChange }: CondicionesFormProps) {
     if (data.tipoPago && data.tipoEntrega) {
       generarTextoCompleto(data.tipoPago, data.tipoEntrega);
     }
-  }, [data.tipoPago, data.tipoEntrega, generarTextoCompleto]);
+  }, [data.tipoPago, data.tipoEntrega]); // Removemos generarTextoCompleto de las dependencias
 
   return (
     <Card>
