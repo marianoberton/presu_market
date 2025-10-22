@@ -7,6 +7,16 @@ function HubSpotIntegrationContent() {
   const searchParams = useSearchParams();
   const [message, setMessage] = useState('');
 
+  const handleOAuthConnect = () => {
+    const clientId = 'ted146c01-c4b8-4ca8-859d-204df22ccb0b';
+    const redirectUri = encodeURIComponent('https://presu-market.vercel.app/oauth-callback');
+    const scopes = encodeURIComponent('crm.objects.deals.read crm.objects.deals.write');
+    
+    const authUrl = `https://app.hubspot.com/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scopes}`;
+    
+    window.location.href = authUrl;
+  };
+
   useEffect(() => {
     const error = searchParams.get('error');
     const success = searchParams.get('success');
@@ -64,10 +74,28 @@ function HubSpotIntegrationContent() {
               <h3 className="text-lg font-semibold text-gray-900 mb-3">
                 🔧 Funcionalidad Actual
               </h3>
-              <p className="text-gray-700">
+              <p className="text-gray-700 mb-4">
                 Al generar un presupuesto, el sistema actualiza automáticamente las propiedades 
                 del deal en HubSpot con toda la información del presupuesto generado.
               </p>
+              
+              <div className="mt-6">
+                <h4 className="text-md font-semibold text-gray-900 mb-3">
+                  🔐 Autorización OAuth
+                </h4>
+                <p className="text-gray-600 mb-4">
+                  Para usar las funciones avanzadas de HubSpot, autoriza la aplicación:
+                </p>
+                <button
+                  onClick={handleOAuthConnect}
+                  className="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center gap-2"
+                >
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                  </svg>
+                  Conectar con HubSpot
+                </button>
+              </div>
             </div>
           </div>
         </div>
