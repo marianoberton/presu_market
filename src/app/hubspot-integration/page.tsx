@@ -8,9 +8,14 @@ function HubSpotIntegrationContent() {
   const [message, setMessage] = useState('');
 
   const handleOAuthConnect = () => {
-    const clientId = 'ted146c01-c4b8-4ca8-859d-204df22ccb0b';
-    const redirectUri = encodeURIComponent('https://presu-market.vercel.app/oauth-callback');
+    const clientId = process.env.NEXT_PUBLIC_HUBSPOT_CLIENT_ID;
+    const redirectUri = encodeURIComponent(process.env.NEXT_PUBLIC_HUBSPOT_REDIRECT_URI || 'https://presu-market.vercel.app/oauth-callback');
     const scopes = encodeURIComponent('crm.objects.deals.read crm.objects.deals.write');
+    
+    if (!clientId) {
+      setMessage('❌ Error: Client ID no configurado');
+      return;
+    }
     
     const authUrl = `https://app.hubspot.com/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scopes}`;
     
