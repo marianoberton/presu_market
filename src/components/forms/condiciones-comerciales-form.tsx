@@ -53,7 +53,7 @@ export function CondicionesComercialesForm({ condiciones, onChange }: Condicione
       condicionesEntrega: entregaText,
       validez: CONDICIONES_FIJAS.validez
     });
-  }, [condiciones, onChange]);
+  }, [condiciones.tipoPago, condiciones.tipoEntrega, condiciones.textoLibrePago]); // Solo dependencias específicas
 
   const handleTipoPagoChange = (value: string) => {
     onChange({

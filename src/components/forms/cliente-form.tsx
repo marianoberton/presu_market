@@ -52,7 +52,7 @@ export function ClienteForm({ data, onChange, selectedDeal, onDealSelected, envi
         onChange(updatedData);
       }
     }
-  }, [selectedDeal, data, onChange]); // Dependencias correctas
+  }, [selectedDeal]); // Removemos data y onChange de las dependencias para evitar bucles
 
   const handleChange = (field: keyof ClienteData, value: string) => {
     onChange({

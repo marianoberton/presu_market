@@ -15,8 +15,8 @@ export function CondicionesForm({ data, onChange }: CondicionesFormProps) {
   
   // Función para generar el texto completo de condiciones comerciales
   const generarTextoCompleto = useCallback((tipoPago: string, tipoEntrega: string) => {
-     const opcionPago = CONDICIONES_PAGO_OPTIONS.find(op => op.value === tipoPago);
-     const opcionEntrega = CONDICIONES_ENTREGA_OPTIONS.find(op => op.value === tipoEntrega);
+    const opcionPago = CONDICIONES_PAGO_OPTIONS.find(opt => opt.value === tipoPago);
+    const opcionEntrega = CONDICIONES_ENTREGA_OPTIONS.find(opt => opt.value === tipoEntrega);
     
     if (!opcionPago || !opcionEntrega) return;
 
@@ -40,7 +40,7 @@ export function CondicionesForm({ data, onChange }: CondicionesFormProps) {
       tipoPago: tipoPago as CondicionesData['tipoPago'],
       tipoEntrega: tipoEntrega as CondicionesData['tipoEntrega']
     });
-  }, [data, onChange]);
+  }, [data]); // Removemos onChange de las dependencias
 
   const handlePagoChange = (tipoPago: string) => {
     if (data.tipoEntrega) {
