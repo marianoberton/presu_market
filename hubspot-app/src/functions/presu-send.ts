@@ -21,7 +21,7 @@ const presuSend = async (context) => {
       backendBase = process.env.BACKEND_BASE;
     } else {
       // Fallback para desarrollo local
-      backendBase = 'http://localhost:3000';
+      backendBase = 'https://presu-market.vercel.app';
     }
     
     const url = `${backendBase}/api/acciones/enviar-whatsapp`;

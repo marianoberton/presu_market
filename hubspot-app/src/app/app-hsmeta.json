@@ -7,7 +7,7 @@
     "distribution": "private",
     "auth": {
       "type": "oauth",
-      "redirectUrls": ["http://localhost:3000/oauth-callback"],
+      "redirectUrls": ["https://presu-market.vercel.app/oauth-callback"],
       "requiredScopes": [
         "crm.objects.deals.read",
         "crm.objects.deals.write"
