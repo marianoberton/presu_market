@@ -1,0 +1,65 @@
+﻿{
+    "success":  true,
+    "data":  {
+                 "total":  3,
+                 "results":  [
+                                 {
+                                     "id":  "45429818683",
+                                     "properties":  {
+                                                        "amount":  "4453297",
+                                                        "closedate":  "2025-10-31T14:13:18.613Z",
+                                                        "createdate":  "2025-10-08T14:34:55.151Z",
+                                                        "dealname":  "P_MANYCHAT_BULLET MAIN_08OCT25",
+                                                        "dealstage":  "1181803150",
+                                                        "hs_lastmodifieddate":  "2025-10-08T15:32:01.516Z",
+                                                        "hs_object_id":  "45429818683",
+                                                        "mp_cliente_email":  null,
+                                                        "mp_cliente_nombre":  null,
+                                                        "mp_cliente_telefono":  null,
+                                                        "pipeline":  "804074768"
+                                                    },
+                                     "createdAt":  "2025-10-08T14:34:55.151Z",
+                                     "updatedAt":  "2025-10-08T15:32:01.516Z",
+                                     "archived":  false
+                                 },
+                                 {
+                                     "id":  "46257154845",
+                                     "properties":  {
+                                                        "amount":  "1149695",
+                                                        "closedate":  "2025-10-31T12:44:19.824Z",
+                                                        "createdate":  "2025-10-17T12:45:02.359Z",
+                                                        "dealname":  "P_MANYCHAT_ART GALILEO_24SEP25",
+                                                        "dealstage":  "1181803150",
+                                                        "hs_lastmodifieddate":  "2025-10-17T12:46:11.371Z",
+                                                        "hs_object_id":  "46257154845",
+                                                        "mp_cliente_email":  null,
+                                                        "mp_cliente_nombre":  null,
+                                                        "mp_cliente_telefono":  null,
+                                                        "pipeline":  "804074768"
+                                                    },
+                                     "createdAt":  "2025-10-17T12:45:02.359Z",
+                                     "updatedAt":  "2025-10-17T12:46:11.371Z",
+                                     "archived":  false
+                                 },
+                                 {
+                                     "id":  "46572480617",
+                                     "properties":  {
+                                                        "amount":  null,
+                                                        "closedate":  null,
+                                                        "createdate":  "2025-10-20T17:00:44.033Z",
+                                                        "dealname":  "Mayorista - Nutry energy snack\n",
+                                                        "dealstage":  "1181803150",
+                                                        "hs_lastmodifieddate":  "2025-10-20T17:01:53.450Z",
+                                                        "hs_object_id":  "46572480617",
+                                                        "mp_cliente_email":  null,
+                                                        "mp_cliente_nombre":  null,
+                                                        "mp_cliente_telefono":  null,
+                                                        "pipeline":  "804074768"
+                                                    },
+                                     "createdAt":  "2025-10-20T17:00:44.033Z",
+                                     "updatedAt":  "2025-10-20T17:01:53.450Z",
+                                     "archived":  false
+                                 }
+                             ]
+             }
+}

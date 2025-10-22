@@ -1,0 +1,11 @@
+{
+  "name": "Presupuestador FOMO",
+  "srcDir": "src",
+  "platformVersion": "2025.2",
+  "features": ["card", "function"],
+  "runtime": "nodejs18.x",
+  "scopes": [
+    "crm.objects.deals.read",
+    "crm.objects.deals.write"
+  ]
+}

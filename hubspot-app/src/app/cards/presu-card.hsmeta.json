@@ -1,0 +1,9 @@
+﻿{
+  "type": "app-card",
+  "data": {
+    "location": "crm.record.tab",
+    "objectTypes": ["DEALS"],
+    "title": "Presupuestos",
+    "entrypoint": "/app/cards/PresuCard.tsx"
+  }
+}
