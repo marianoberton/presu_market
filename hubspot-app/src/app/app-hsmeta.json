@@ -3,18 +3,23 @@
   "type": "app",
   "config": {
     "name": "Presupuestador FOMO",
-    "description": "App Card para gestionar presupuestos desde HubSpot",
+    "description": "App para gestionar presupuestos en HubSpot CRM",
     "distribution": "private",
     "auth": {
       "type": "oauth",
-      "redirectUrls": ["https://presu-market.vercel.app/oauth-callback"],
+      "redirectUrls": ["https://generador-presupuestos-fomo.vercel.app/oauth-callback"],
       "requiredScopes": [
         "crm.objects.deals.read",
         "crm.objects.deals.write"
-      ]
+      ],
+      "optionalScopes": [],
+      "conditionallyRequiredScopes": []
     },
     "permittedUrls": {
-      "fetch": ["https://presu-market.vercel.app"],
+      "fetch": [
+        "https://generador-presupuestos-fomo.vercel.app",
+        "https://api.hubapi.com"
+      ],
       "iframe": [],
       "img": []
     }

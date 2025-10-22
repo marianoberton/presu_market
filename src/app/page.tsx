@@ -90,9 +90,10 @@ export default function Home() {
       const pdfBlob = await pdf(<PDFDocument data={presupuestoData} />).toBlob();
 
       // 2. Subir PDF a HubSpot
+      const fileName = `presupuesto-${selectedDeal.properties.dealname}-${Date.now()}.pdf`;
       const formData = new FormData();
-      formData.append('file', pdfBlob, `presupuesto-${selectedDeal.properties.dealname}-${Date.now()}.pdf`);
-      formData.append('fileName', `presupuesto-${selectedDeal.properties.dealname}-${Date.now()}.pdf`);
+      formData.append('file', pdfBlob, fileName);
+      formData.append('fileName', fileName);
 
       const uploadResponse = await fetch('/api/hubspot/files', {
         method: 'POST',
@@ -104,16 +105,72 @@ export default function Home() {
         throw new Error(uploadResult.error || 'Error al subir PDF');
       }
 
-      const fileUrl = (uploadResult.data as { url: string }).url;
+      const fileData = uploadResult.data as { url: string; id: string };
+      const fileUrl = fileData.url;
+      const fileId = fileData.id;
+
+      // 2.5. Adjuntar archivo al Deal
+      const attachResponse = await fetch('/api/hubspot/deals/attach-file', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          dealId: selectedDeal.id,
+          fileId: fileId,
+          fileName: fileName,
+          noteBody: `Presupuesto generado automáticamente para ${datosCliente.nombre} - Total: $${totales.total.toLocaleString('es-AR')}`
+        })
+      });
+
+      const attachResult: ApiResponse = await attachResponse.json();
+      if (!attachResult.success) {
+        console.warn('Error al adjuntar archivo al deal:', attachResult.error);
+        // No fallar completamente, solo mostrar advertencia
+      } else {
+        console.log('Archivo adjuntado exitosamente al Deal');
+      }
 
       // 3. Preparar datos para actualizar el deal
       const tieneItemsACotizar = productos.some(p => p.aCotizar);
+      
+      // Calcular fecha de cierre: 15 días después de hoy
+      const fechaCierre = new Date();
+      fechaCierre.setDate(fechaCierre.getDate() + 15);
+      const closeDateFormatted = fechaCierre.toISOString().split('T')[0]; // Formato YYYY-MM-DD
+      
+      // Determinar prioridad y propietario basado en el monto
+      let prioridad: string;
+      let prioridadDisplay: string;
+      let ownerEmail: string;
+      let ownerId: string;
+      
+      if (totales.total < 2500000) {
+        prioridad = 'low';
+        prioridadDisplay = 'Baja';
+        ownerEmail = 'ventas@marketpaper.com.ar'; // Johana Baziluk
+        ownerId = '403069595';
+      } else if (totales.total <= 5000000) {
+        prioridad = 'medium';
+        prioridadDisplay = 'Media';
+        ownerEmail = 'ventas@marketpaper.com.ar'; // Johana Baziluk
+        ownerId = '403069595';
+      } else {
+        prioridad = 'high';
+        prioridadDisplay = 'Alta';
+        ownerEmail = 'arqingridgutman@gmail.com'; // Ingrid Gutman
+        ownerId = '403074560';
+      }
+      
+      // Ya no necesitamos hacer la consulta a la API de owners porque tenemos los IDs directos
       
       const updatePayload = {
         dealId: selectedDeal.id,
         properties: {
           // Campos estándar de HubSpot
           amount: totales.total.toString(), // Total final va al campo amount del deal
+          closedate: closeDateFormatted, // Fecha de cierre 15 días después
+          hubspot_owner_id: ownerId, // Asignar propietario con ID directo
           
           // Propiedades personalizadas
           mp_cliente_nombre: datosCliente.nombre,
@@ -125,6 +182,7 @@ export default function Home() {
           mp_condiciones_pago: condiciones.condicionesPago,
           mp_total_subtotal: totales.subtotal.toString(),
           mp_total_iva: totales.iva.toString(),
+          hs_priority: prioridad, // Prioridad usando el campo estándar de HubSpot
           mp_items_json: JSON.stringify(productos.map(p => ({
             descripcion: p.descripcion,
             cantidad: p.cantidad,
@@ -155,9 +213,12 @@ export default function Home() {
       console.log('Presupuesto enviado exitosamente a HubSpot');
       
       // Mostrar mensaje de éxito
+      const attachMessage = attachResult?.success ? ' El archivo fue adjuntado al Deal.' : ' (Nota: El archivo no pudo ser adjuntado al Deal, pero está disponible en la URL del presupuesto)';
+      const ownerName = ownerEmail === 'ventas@marketpaper.com.ar' ? 'Johana Baziluk' : 'Ingrid Gutman';
+      const ownerMessage = ` Prioridad: ${prioridadDisplay}. Propietario asignado: ${ownerName}.`;
       const mensaje = tieneItemsACotizar 
-        ? 'Presupuesto enviado a HubSpot. El deal no se movió de etapa porque contiene items a cotizar.'
-        : 'Presupuesto enviado a HubSpot y deal actualizado exitosamente.';
+        ? `Presupuesto enviado a HubSpot. El deal no se movió de etapa porque contiene items a cotizar.${attachMessage}${ownerMessage}`
+        : `Presupuesto enviado a HubSpot y deal actualizado exitosamente.${attachMessage}${ownerMessage}`;
       
       alert(mensaje);
 
