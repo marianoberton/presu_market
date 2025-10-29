@@ -14,7 +14,7 @@ export function calcularMedidasProduccion(
     return {
       largoProduccion: largo,
       anchoProduccion: ancho,
-      superficie: (largo * ancho) / 10000 // Convertir de cm² a m²
+      superficie: (largo * ancho) / 1000000 // Convertir de mm² a m²
     };
   }
 
@@ -23,7 +23,7 @@ export function calcularMedidasProduccion(
     return {
       largoProduccion: largo,
       anchoProduccion: ancho,
-      superficie: (largo * ancho) / 10000 // Convertir de cm² a m²
+      superficie: (largo * ancho) / 1000000 // Convertir de mm² a m²
     };
   }
 
@@ -33,9 +33,11 @@ export function calcularMedidasProduccion(
 
   switch (tipo) {
     case 'caja-aleta-simple':
-      // Fórmula corregida: +40 largo +50 ancho
-      largoProduccion = largo + 40;
-      anchoProduccion = ancho + 50;
+      // Fórmula correcta de caja aleta simple:
+      // LARGO DE PLANCHA: 2 LARGOS + 2 ANCHOS + 40
+      // ANCHO DE PLANCHA: 1 ANCHO + 1 ALTO
+      largoProduccion = 2 * largo + 2 * ancho + 40;
+      anchoProduccion = ancho + alto;
       break;
     
     case 'bandeja':
@@ -192,8 +194,8 @@ export function generarLabelsCalculos(
 
   switch (tipo) {
     case 'caja-aleta-simple':
-      largoLabel = `(${largo} + 40)`;
-      anchoLabel = `(${ancho} + 50)`;
+      largoLabel = `(${largo}×2 + ${ancho}×2 + 40)`;
+      anchoLabel = `(${ancho} + ${alto})`;
       break;
     
     case 'bandeja':

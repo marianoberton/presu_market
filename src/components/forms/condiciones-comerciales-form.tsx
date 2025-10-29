@@ -107,14 +107,17 @@ export function CondicionesComercialesForm({ condiciones, onChange }: Condicione
 
           {/* Texto libre para condiciones de pago */}
           {condiciones.tipoPago === 'texto_libre' && (
-            <div className="space-y-2">
-              <Label htmlFor="textoLibrePago">Texto personalizado para condiciones de pago</Label>
+            <div className="space-y-2 mt-4">
+              <Label htmlFor="textoLibrePago" className="text-sm font-medium">
+                Texto personalizado para condiciones de pago
+              </Label>
               <Textarea
                 id="textoLibrePago"
                 value={condiciones.textoLibrePago || ''}
                 onChange={(e) => handleTextoLibreChange(e.target.value)}
                 placeholder="Ingrese las condiciones de pago personalizadas..."
-                rows={3}
+                rows={4}
+                className="w-full min-h-[100px] border-2 border-gray-300 focus:border-blue-500"
               />
             </div>
           )}
