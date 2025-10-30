@@ -74,10 +74,10 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingTop: 30, // Espaciado superior en todas las páginas
-    paddingHorizontal: 30,
-    paddingBottom: 30,
+    paddingHorizontal: 15, // Reducido de 30 a 15 para más ancho
+    paddingBottom: 120, // Espacio reservado para totales fijos
     flex: 1,
-    // Removido height: '100%', display: 'flex', flexDirection: 'column' para permitir flujo natural
+    // Mejoras para evitar cortes de contenido
   },
   // SECCIÓN CLIENTE MEJORADA
   clientSection: {
@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     paddingBottom: 6,
     borderBottomWidth: 2,
-    borderBottomColor: '#2563EB',
+    borderBottomColor: '#2E9FEF',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
@@ -153,7 +153,7 @@ const styles = StyleSheet.create({
   },
   tableHeader: {
     flexDirection: 'row',
-    backgroundColor: '#2563EB', // Azul Market Paper
+    backgroundColor: '#2E9FEF', // Unificado con el color del header
     paddingVertical: 12,
     paddingHorizontal: 8,
   },
@@ -173,15 +173,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   // COLUMNAS OPTIMIZADAS
-  col1: { width: '5%', textAlign: 'center' },
-  col2: { width: '25%', paddingRight: 5 }, // Reducido de 28% a 25%
+  col1: { width: '4%', textAlign: 'center' }, // Reducido de 5% a 4%
+  col2: { width: '22%', paddingRight: 5 }, // Aumentado de 20% a 22%
   col3: { width: '7%', textAlign: 'center' },
-  col4: { width: '9%', textAlign: 'center' }, // Aumentado de 7% a 9% para ANCHO
-  col5: { width: '7%', textAlign: 'center' },
-  col6: { width: '12%', textAlign: 'center' },
-  col7: { width: '10%', textAlign: 'center' },
-  col8: { width: '7%', textAlign: 'center' }, // Aumentado de 6% a 7%
-  col9: { width: '18%', textAlign: 'right', paddingRight: 5 },
+  col4: { width: '7%', textAlign: 'center' }, // Reducido de 9% a 7%
+  col5: { width: '6%', textAlign: 'center' }, // Reducido de 7% a 6%
+  col6: { width: '13%', textAlign: 'center' }, // Aumentado de 12% a 13%
+  col7: { width: '9%', textAlign: 'center' }, // Reducido de 10% a 9%
+  col8: { width: '6%', textAlign: 'center' }, // Reducido de 7% a 6%
+  col9: { width: '9%', textAlign: 'right', paddingRight: 3 }, // Aumentado de 8% a 9%
+  col10: { width: '17%', textAlign: 'right', paddingRight: 5 }, // Aumentado de 15% a 17%
   headerText: {
     fontWeight: 'bold',
     fontSize: 10,
@@ -199,27 +200,23 @@ const styles = StyleSheet.create({
     color: '#1F2937',
     fontWeight: 'bold',
   },
-  // TOTALES DESTACADOS - DISEÑO PROFESIONAL
+  // SECCIÓN TOTALES - POSICIÓN FIJA
   totalsContainer: {
-    alignItems: 'flex-end',
-    marginTop: 24, // Separación visual de la tabla de productos
-    marginBottom: 25,
-    // Controles de página para evitar cortes
-    breakInside: 'avoid',
-    orphans: 2,
-    widows: 2,
+    position: 'absolute',
+    bottom: 30,
+    right: 30,
+    width: 200,
+    backgroundColor: '#f8f9fa',
+    border: '1 solid #dee2e6',
+    borderRadius: 4,
+    padding: 12,
   },
   totalsBox: {
-    width: 240, // Reducido de 280 a 240
-    backgroundColor: '#F8FAFC',
-    padding: 15, // Reducido de 20 a 15
-    borderWidth: 2,
-    borderColor: '#2563EB',
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    backgroundColor: 'white',
+    border: '1 solid #2E9FEF',
+    borderRadius: 4,
+    padding: 8,
+    minWidth: 180,
   },
   subtotalRow: {
     flexDirection: 'row',
@@ -238,7 +235,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 6, // Reducido de 8 a 6
     paddingHorizontal: 10, // Reducido de 12 a 10
-    backgroundColor: '#2563EB',
+    backgroundColor: '#2E9FEF',
     borderRadius: 8,
     marginTop: 6, // Reducido de 8 a 6
   },
@@ -268,6 +265,7 @@ const styles = StyleSheet.create({
   conditionsSection: {
     marginTop: 40, // Añadido margen superior para separar del borde
     marginBottom: 25,
+    marginHorizontal: 10, // Reducido de 20 a 10 para más ancho
     backgroundColor: '#F8FAFC',
     padding: 20,
     borderRadius: 8,
@@ -293,6 +291,27 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
+  
+  // LEYENDA DE ABREVIACIONES - TEXTO SIMPLE SIN CONTENEDOR
+  abbreviationsNote: {
+    position: 'absolute',
+    bottom: 35,
+    left: 30,
+    width: 180,
+  },
+  abbreviationsTitle: {
+    fontSize: 5,
+    fontWeight: 'bold',
+    color: '#6B7280',
+    marginBottom: 2,
+    textTransform: 'uppercase',
+  },
+  abbreviationsText: {
+    fontSize: 4.5,
+    color: '#9CA3AF',
+    lineHeight: 1.2,
+  },
+  
   // FOOTER PROFESIONAL
   footer: {
     position: 'absolute',
@@ -305,7 +324,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 15,
     borderTopWidth: 3,
-    borderTopColor: '#2563EB',
+    borderTopColor: '#2E9FEF',
   },
   footerSection: {
     flexDirection: 'row',
@@ -391,13 +410,14 @@ export function PDFDocument({ data }: PDFDocumentProps) {
             <View style={styles.tableHeader} fixed>
               <Text style={[styles.headerText, styles.col1]}>#</Text>
               <Text style={[styles.headerText, styles.col2]}>Descripción</Text>
-              <Text style={[styles.headerText, styles.col3]}>Largo</Text>
-              <Text style={[styles.headerText, styles.col4]}>Ancho</Text>
+              <Text style={[styles.headerText, styles.col3]}>LAR.</Text>
+              <Text style={[styles.headerText, styles.col4]}>AN.</Text>
               <Text style={[styles.headerText, styles.col5]}>Alto</Text>
               <Text style={[styles.headerText, styles.col6]}>Calidad</Text>
               <Text style={[styles.headerText, styles.col7]}>Color</Text>
               <Text style={[styles.headerText, styles.col8]}>Cant.</Text>
-              <Text style={[styles.headerText, styles.col9]}>Subtotal</Text>
+              <Text style={[styles.headerText, styles.col9]}>P.U.</Text>
+              <Text style={[styles.headerText, styles.col10]}>Subtotal</Text>
             </View>
 
             {/* Filas de productos */}
@@ -420,6 +440,9 @@ export function PDFDocument({ data }: PDFDocumentProps) {
                   <Text style={[styles.cellText, styles.col7]}>{producto.color || '-'}</Text>
                   <Text style={[styles.cellText, styles.col8]}>{producto.cantidad}</Text>
                   <Text style={[styles.cellTextBold, styles.col9]}>
+                    {producto.aCotizar ? '-' : formatearMoneda(producto.precioUnitario)}
+                  </Text>
+                  <Text style={[styles.cellTextBold, styles.col10]}>
                     {producto.aCotizar ? 'A COTIZAR' : formatearMoneda(producto.subtotal)}
                   </Text>
                 </View>
@@ -428,8 +451,8 @@ export function PDFDocument({ data }: PDFDocumentProps) {
           </View>
         </View>
 
-        {/* TOTALES DESTACADOS - FLUJO NATURAL */}
-        <View style={styles.totalsContainer} wrap={false}>
+        {/* TOTALES FIJOS - POSICIÓN ABSOLUTA SOLO EN LA PRIMERA PÁGINA */}
+        <View style={styles.totalsContainer}>
           <View style={styles.totalsBox}>
             <View style={styles.subtotalRow}>
               <Text style={styles.totalLabel}>Subtotal:</Text>
@@ -446,7 +469,16 @@ export function PDFDocument({ data }: PDFDocumentProps) {
           </View>
         </View>
 
-        {/* CONDICIONES COMERCIALES MEJORADAS - SALTO DE PÁGINA GARANTIZADO */}
+        {/* DESCRIPCIÓN DE ABREVIACIONES - LADO IZQUIERDO A LA ALTURA DEL TOTAL */}
+        <View style={styles.abbreviationsNote}>
+          <Text style={styles.abbreviationsTitle}>Abreviaciones:</Text>
+          <Text style={styles.abbreviationsText}>
+            LAR. = Largo • AN. = Ancho{'\n'}P.U. = Precio Unitario • CANT. = Cantidad
+          </Text>
+        </View>
+        </View>
+
+        {/* CONDICIONES COMERCIALES - PÁGINA SEPARADA SIN TOTALES */}
         <View break>
           <View style={styles.conditionsSection} wrap={false}>
             <Text style={styles.sectionTitle}>Condiciones Comerciales</Text>
@@ -460,7 +492,6 @@ export function PDFDocument({ data }: PDFDocumentProps) {
             <Text style={styles.conditionsTitle}>Validez:</Text>
             <Text style={styles.conditionsText}>{data.condiciones.validez}</Text>
           </View>
-        </View>
         </View>
 
         {/* FOOTER PROFESIONAL */}
