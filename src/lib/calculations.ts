@@ -127,11 +127,15 @@ export function calcularTotales(productos: ProductoData[]): TotalesData {
   const subtotal = productosParaTotal.reduce((acc, producto) => acc + producto.subtotal, 0);
   const iva = Math.round((subtotal * IVA_PERCENTAGE) * 100) / 100;
   const total = Math.round((subtotal + iva) * 100) / 100;
+  
+  // Calcular m² totales de todos los productos (incluye todos, no solo los que tienen precio)
+  const metrosCuadradosTotales = calcularMetrosCuadradosTotales(productos);
 
   return {
     subtotal: Math.round(subtotal * 100) / 100,
     iva,
-    total
+    total,
+    metrosCuadradosTotales: Math.round(metrosCuadradosTotales * 100) / 100 // Redondear a 2 decimales
   };
 }
 
@@ -238,4 +242,27 @@ export function generarLabelsCalculos(
 
 export function generarIdProducto(): string {
   return `producto_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+}
+
+/**
+ * Calcula los metros cuadrados totales de todos los productos del presupuesto
+ * Utiliza la superficie de producción (cartón necesario) para cada producto
+ * Solo incluye productos que tienen dimensiones físicas (excluye polímero y sacabocado)
+ */
+export function calcularMetrosCuadradosTotales(productos: ProductoData[]): number {
+  let metrosCuadradosTotales = 0;
+
+  productos.forEach(producto => {
+    // Solo calcular m² para productos que tienen dimensiones físicas
+    // Excluir polímero y sacabocado ya que no tienen dimensiones físicas relevantes
+    if (producto.tipo !== 'polimero' && producto.tipo !== 'sacabocado') {
+      // Usar la función existente para obtener la superficie de producción
+      const medidas = calcularMedidasProduccion(producto.largo, producto.ancho, producto.alto, producto.tipo);
+      const superficieTotalProducto = medidas.superficie * producto.cantidad;
+      
+      metrosCuadradosTotales += superficieTotalProducto;
+    }
+  });
+
+  return metrosCuadradosTotales;
 }

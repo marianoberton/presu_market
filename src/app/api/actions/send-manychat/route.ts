@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     let body: SendManyChatRequest;
     try {
       body = await request.json();
-    } catch (error) {
+    } catch {
       return NextResponse.json({
         ok: false,
         error: 'JSON inválido en el cuerpo de la petición'

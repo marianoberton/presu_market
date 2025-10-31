@@ -96,7 +96,8 @@ export const mockPresupuestoData: PresupuestoData = {
   totales: {
     subtotal: 2066250,
     iva: 433912.5,
-    total: 2500162.5
+    total: 2500162.5,
+    metrosCuadradosTotales: 513.82 // Superficie de producción total: Caja aleta simple (182 m²) + Caja aleta cruzada x1 (230.4 m²) + Plancha (35 m²) + Bandeja (66.42 m²) = 513.82 m²
   },
   fecha: new Date().toLocaleDateString('es-AR')
 };

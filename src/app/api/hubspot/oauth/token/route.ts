@@ -14,7 +14,7 @@ interface HubSpotTokenResponse {
 
 export async function POST(request: NextRequest) {
   try {
-    const { code, state }: TokenRequest = await request.json();
+    const { code }: TokenRequest = await request.json();
 
     // Validar que tenemos el código
     if (!code) {

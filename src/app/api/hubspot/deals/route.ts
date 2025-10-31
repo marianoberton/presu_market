@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { HubSpotDealsResponse, ApiResponse } from '@/lib/types/presupuesto';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const token = process.env.HUBSPOT_TOKEN;
     const pipeline = process.env.HUBSPOT_PIPELINE;

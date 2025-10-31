@@ -12,6 +12,7 @@ import { ClienteData, ProductoData, CondicionesData, TotalesData, PresupuestoDat
 import { HubSpotDeal, ApiResponse } from '@/lib/types/presupuesto';
 import { calcularTotales } from '@/lib/calculations';
 import { Download, Upload } from 'lucide-react';
+import Image from 'next/image';
 
 export default function Home() {
   const [datosCliente, setDatosCliente] = useState<ClienteData>({
@@ -25,7 +26,8 @@ export default function Home() {
   const [totales, setTotales] = useState<TotalesData>({
     subtotal: 0,
     iva: 0,
-    total: 0
+    total: 0,
+    metrosCuadradosTotales: 0
   });
   const [condiciones, setCondiciones] = useState<CondicionesData>(DEFAULT_CONDITIONS);
   const [generandoPDF, setGenerandoPDF] = useState(false);
@@ -182,6 +184,7 @@ export default function Home() {
           mp_condiciones_pago: condiciones.condicionesPago,
           mp_total_subtotal: totales.subtotal.toString(),
           mp_total_iva: totales.iva.toString(),
+          mp_metros_cuadrados_totales: totales.metrosCuadradosTotales,
           hs_priority: prioridad, // Prioridad usando el campo estándar de HubSpot
           mp_items_json: JSON.stringify(productos.map(p => ({
             descripcion: p.descripcion,
@@ -270,9 +273,11 @@ export default function Home() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <div className="bg-white p-2 rounded-lg">
-                <img 
+                <Image 
                   src="/MARKET-PAPER-LOGO-CURVAS_Mesa-de-trabajo-1-3-e1726845431314-1400x571 (1).png" 
                   alt="Market Paper Logo" 
+                  width={120}
+                  height={32}
                   className="h-8 w-auto"
                 />
               </div>
@@ -350,9 +355,11 @@ export default function Home() {
                     <>
                       <Upload className="mr-2 h-4 w-4" />
                       <span>Generar y Enviar</span>
-                      <img 
+                      <Image 
                         src="/hubspot-1.svg" 
                         alt="HubSpot" 
+                        width={16}
+                        height={16}
                         className="ml-2 h-4 w-4"
                       />
                     </>

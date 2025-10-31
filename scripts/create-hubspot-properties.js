@@ -1,3 +1,34 @@
+const fs = require('fs');
+const path = require('path');
+
+// Cargar variables de entorno desde .env.local
+function loadEnvLocal() {
+  const envPath = path.join(__dirname, '..', '.env.local');
+  if (fs.existsSync(envPath)) {
+    const envContent = fs.readFileSync(envPath, 'utf8');
+    const lines = envContent.split('\n');
+    
+    lines.forEach(line => {
+      const trimmedLine = line.trim();
+      if (trimmedLine && !trimmedLine.startsWith('#')) {
+        const [key, ...valueParts] = trimmedLine.split('=');
+        if (key && valueParts.length > 0) {
+          let value = valueParts.join('=').trim();
+          // Remover comentarios inline (todo después de #)
+          const commentIndex = value.indexOf('#');
+          if (commentIndex !== -1) {
+            value = value.substring(0, commentIndex).trim();
+          }
+          process.env[key.trim()] = value;
+        }
+      }
+    });
+  }
+}
+
+// Cargar variables de entorno
+loadEnvLocal();
+
 // Configuración
 const HUBSPOT_API_KEY = process.env.HUBSPOT_TOKEN || process.env.HUBSPOT_API_KEY;
 const BASE_URL = 'https://api.hubapi.com/crm/v3/properties/deals';
@@ -92,7 +123,15 @@ const properties = [
     fieldType: 'text',
     description: 'Total final del presupuesto'
   },
-  // Datos Adicionales
+  {
+    groupName: 'dealinformation',
+    name: 'mp_metros_cuadrados_totales',
+    label: 'Metros Cuadrados Totales',
+    type: 'number',
+    fieldType: 'number',
+    description: 'Total de metros cuadrados del presupuesto (clave para el equipo de ventas)'
+  },
+  // Items y EstadoDatos Adicionales
   {
     groupName: 'dealinformation',
     name: 'mp_items_json',

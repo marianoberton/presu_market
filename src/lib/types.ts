@@ -41,6 +41,7 @@ export interface TotalesData {
   subtotal: number;
   iva: number;
   total: number;
+  metrosCuadradosTotales: number; // m² totales del presupuesto
 }
 
 export interface PresupuestoData {

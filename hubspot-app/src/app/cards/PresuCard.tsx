@@ -21,7 +21,7 @@ interface DealData {
   mp_total_iva?: string;
   mp_total_final?: string;
   mp_tiene_items_a_cotizar?: string;
-  mp_metros_cuadrados_totales?: string;
+  mp_metros_cuadrados_totales?: number;
 }
 
 interface BudgetItem {
@@ -169,7 +169,7 @@ const PresuCard = ({ context, actions }: any) => {
       mp_total_iva: '3150',
       mp_total_final: '18150',
       mp_tiene_items_a_cotizar: 'true',
-      mp_metros_cuadrados_totales: '513.82'
+      mp_metros_cuadrados_totales: 513.82
       });
       setStatus('ready');
       
@@ -246,7 +246,7 @@ const PresuCard = ({ context, actions }: any) => {
         mp_total_subtotal: '15000',
         mp_total_iva: '3150',
         mp_total_final: '18150',
-        mp_metros_cuadrados_totales: '513.82',
+        mp_metros_cuadrados_totales: 513.82,
         mp_tiene_items_a_cotizar: 'true'
       });
       setStatus('ready');

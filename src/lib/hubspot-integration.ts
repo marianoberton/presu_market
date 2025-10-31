@@ -9,7 +9,7 @@ import { PresupuestoData } from './types';
  * Función para generar y enviar presupuesto a HubSpot
  * Actualmente redirige a la página de desarrollo
  */
-export async function generarHubSpot(_presupuesto: PresupuestoData) {
+export async function generarHubSpot() {
   // Por ahora, simplemente abrimos la página de desarrollo
   const hubspotUrl = '/hubspot-integration';
   window.open(hubspotUrl, '_blank');

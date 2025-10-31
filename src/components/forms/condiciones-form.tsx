@@ -40,7 +40,7 @@ export function CondicionesForm({ data, onChange }: CondicionesFormProps) {
       tipoPago: tipoPago as CondicionesData['tipoPago'],
       tipoEntrega: tipoEntrega as CondicionesData['tipoEntrega']
     });
-  }, [data]); // Removemos onChange de las dependencias
+  }, [onChange]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handlePagoChange = (tipoPago: string) => {
     if (data.tipoEntrega) {
@@ -69,7 +69,7 @@ export function CondicionesForm({ data, onChange }: CondicionesFormProps) {
     if (data.tipoPago && data.tipoEntrega) {
       generarTextoCompleto(data.tipoPago, data.tipoEntrega);
     }
-  }, [data.tipoPago, data.tipoEntrega]); // Removemos generarTextoCompleto de las dependencias
+  }, [data.tipoPago, data.tipoEntrega]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <Card>

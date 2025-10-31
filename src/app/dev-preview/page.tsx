@@ -11,8 +11,10 @@ import { Download, Eye, RefreshCw } from 'lucide-react';
 export default function DevPreviewPage() {
   const [presupuestoData, setPresupuestoData] = useState<PresupuestoData>(mockPresupuestoData);
   const [showPDF, setShowPDF] = useState(true);
-  const [PDFViewer, setPDFViewer] = useState<any>(null);
-  const [PDFDownloadLink, setPDFDownloadLink] = useState<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [PDFViewer, setPDFViewer] = useState<React.ComponentType<any> | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [PDFDownloadLink, setPDFDownloadLink] = useState<React.ComponentType<any> | null>(null);
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
@@ -167,8 +169,8 @@ export default function DevPreviewPage() {
               <li>Usa esta página para ver los cambios en el PDF sin llenar formularios</li>
               <li>Los datos de prueba se cargan automáticamente desde <code>mock-data.ts</code></li>
               <li>Puedes ocultar/mostrar el PDF para mejorar el rendimiento mientras trabajas</li>
-              <li>El botón "Actualizar Fecha" simula un nuevo presupuesto</li>
-              <li>Usa "Descargar PDF" para obtener una copia del documento actual</li>
+              <li>El botón &quot;Actualizar Fecha&quot; simula un nuevo presupuesto</li>
+              <li>Usa &quot;Descargar PDF&quot; para obtener una copia del documento actual</li>
               <li>Modifica <code>mock-data.ts</code> para probar con diferentes datos</li>
             </ul>
           </CardContent>

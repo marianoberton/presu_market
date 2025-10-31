@@ -55,6 +55,11 @@ export function TotalesDisplay({ totales, productos }: TotalesDisplayProps) {
             <span className="font-medium">{formatearMoneda(totales.iva)}</span>
           </div>
           
+          <div className="flex justify-between items-center py-2 border-b border-gray-100">
+            <span className="text-sm text-gray-600">Metros cuadrados totales:</span>
+            <span className="font-medium text-green-600">{(totales.metrosCuadradosTotales || 0).toFixed(2)} m²</span>
+          </div>
+          
           <div className="flex justify-between items-center py-3 border-t-2 border-gray-200">
             <span className="text-lg font-semibold text-gray-900">Total:</span>
             <span className="text-xl font-bold text-blue-600">{formatearMoneda(totales.total)}</span>
