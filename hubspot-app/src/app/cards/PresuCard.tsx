@@ -21,6 +21,7 @@ interface DealData {
   mp_total_iva?: string;
   mp_total_final?: string;
   mp_tiene_items_a_cotizar?: string;
+  mp_metros_cuadrados_totales?: string;
 }
 
 interface BudgetItem {
@@ -118,17 +119,18 @@ const PresuCard = ({ context, actions }: any) => {
       if (actions?.fetchCrmObjectProperties) {
         try {
           const properties = await actions.fetchCrmObjectProperties([
-            'dealname', 
-            'amount', 
-            'dealstage',
-            'mp_items_json',
-            'mp_condiciones_pago',
-            'mp_condiciones_entrega',
-            'mp_total_subtotal',
-            'mp_total_iva',
-            'mp_total_final',
-            'mp_tiene_items_a_cotizar'
-          ]);
+        'dealname',
+        'amount', 
+        'dealstage',
+        'mp_items_json',
+        'mp_condiciones_pago',
+        'mp_condiciones_entrega',
+        'mp_total_subtotal',
+        'mp_total_iva',
+        'mp_total_final',
+        'mp_tiene_items_a_cotizar',
+        'mp_metros_cuadrados_totales'
+      ]);
           
           setDealData(properties);
           setStatus('ready');
@@ -161,12 +163,13 @@ const PresuCard = ({ context, actions }: any) => {
         amount: '$18,150',
         dealstage: 'Qualified to Buy',
         mp_items_json: JSON.stringify(sampleItems),
-        mp_condiciones_pago: '50% anticipo por transferencia bancaria. Una vez acreditado el importe se toma el pedido. Enviar OC.\nEl resto del pago, 48 hs previo a la entrega.',
-        mp_condiciones_entrega: 'Demora producción 15 días aprox.\nLa mercadería se entrega palletizada. Debe contar con personal para la descarga.',
-        mp_total_subtotal: '15000',
-        mp_total_iva: '3150',
-        mp_total_final: '18150',
-        mp_tiene_items_a_cotizar: 'true'
+      mp_condiciones_pago: '50% anticipo por transferencia bancaria. Una vez acreditado el importe se toma el pedido. Enviar OC.\nEl resto del pago, 48 hs previo a la entrega.',
+      mp_condiciones_entrega: 'Demora producción 15 días aprox.\nLa mercadería se entrega palletizada. Debe contar con personal para la descarga.',
+      mp_total_subtotal: '15000',
+      mp_total_iva: '3150',
+      mp_total_final: '18150',
+      mp_tiene_items_a_cotizar: 'true',
+      mp_metros_cuadrados_totales: '513.82'
       });
       setStatus('ready');
       
@@ -243,6 +246,7 @@ const PresuCard = ({ context, actions }: any) => {
         mp_total_subtotal: '15000',
         mp_total_iva: '3150',
         mp_total_final: '18150',
+        mp_metros_cuadrados_totales: '513.82',
         mp_tiene_items_a_cotizar: 'true'
       });
       setStatus('ready');
@@ -313,7 +317,28 @@ const PresuCard = ({ context, actions }: any) => {
   return (
     <Box>
       <Flex direction="column" gap="medium">
-        <Text variant="h3">💰 Presupuestador FOMO</Text>
+        <Text variant="h2">💰 Presupuestador FOMO</Text>
+        
+        {/* Métricas Principales */}
+        {(dealData?.mp_total_final || dealData?.mp_metros_cuadrados_totales) && (
+          <Box>
+            <Text variant="h4">📊 Métricas Principales</Text>
+            <Flex direction="row" justify="between" gap="medium">
+              {dealData.mp_metros_cuadrados_totales && (
+                <Box>
+                  <Text>📐 M² del Pedido</Text>
+                  <Text variant="h3">{dealData.mp_metros_cuadrados_totales} m²</Text>
+                </Box>
+              )}
+              {dealData.mp_total_final && (
+                <Box>
+                  <Text>💰 Valor Total</Text>
+                  <Text variant="h3">{formatCurrency(Number(dealData.mp_total_final))}</Text>
+                </Box>
+              )}
+            </Flex>
+          </Box>
+        )}
         
         {status === 'error' && (
           <Alert title="Error" variant="error">
@@ -326,70 +351,67 @@ const PresuCard = ({ context, actions }: any) => {
           <Box>
             <Text variant="h4">📦 Items del Presupuesto</Text>
             {(() => {
-              const items = parseBudgetItems(dealData.mp_items_json);
-              if (items.length === 0) {
-                return <Text>No hay items disponibles</Text>;
-              }
-              
-              return (
-                <Box>
-                  {items.map((item, index) => (
-                    <Box key={index} style={{ 
-                      border: '1px solid #e1e5e9', 
-                      borderRadius: '4px', 
-                      padding: '12px', 
-                      marginBottom: '8px',
-                      backgroundColor: item.aCotizar ? '#fff3cd' : '#f8f9fa'
-                    }}>
-                      <Flex direction="column" gap="small">
-                        <Text variant="h5">{item.descripcion}</Text>
-                        <Flex direction="row" justify="between">
-                          <Text>Cantidad: {item.cantidad}</Text>
+              try {
+                const items: BudgetItem[] = JSON.parse(dealData.mp_items_json);
+                return (
+                  <Box>
+                    {items.map((item, index) => (
+                      <Box key={index}>
+                        <Flex direction="row" justify="between" align="center">
+                          <Box>
+                            <Text>{item.descripcion}</Text>
+                            {item.aCotizar && (
+                              <Text>🔍 A COTIZAR</Text>
+                            )}
+                          </Box>
+                          <Box>
+                            <Text>Cantidad: {item.cantidad}</Text>
+                          </Box>
+                          <Box>
+                            {!item.aCotizar ? (
+                              <>
+                                <Text>${item.precio.toLocaleString('es-AR')} c/u</Text>
+                                <Text>${item.subtotal.toLocaleString('es-AR')}</Text>
+                              </>
+                            ) : (
+                              <Text>A cotizar</Text>
+                            )}
+                          </Box>
                         </Flex>
-                        {item.aCotizar ? (
-                          <Text style={{ color: '#856404', fontWeight: 'bold' }}>
-                            🔍 A COTIZAR
-                          </Text>
-                        ) : (
-                          <Text style={{ fontWeight: 'bold' }}>
-                            Subtotal: {formatCurrency(item.subtotal)}
-                          </Text>
-                        )}
-                      </Flex>
-                    </Box>
-                  ))}
-                  
-                  {/* Totales */}
-                  {(dealData.mp_total_subtotal || dealData.mp_total_iva || dealData.mp_total_final) && (
-                    <Box style={{ 
-                      border: '2px solid #007bff', 
-                      borderRadius: '4px', 
-                      padding: '12px', 
-                      marginTop: '12px',
-                      backgroundColor: '#f8f9ff'
-                    }}>
-                      <Text variant="h5">💰 Totales</Text>
-                      {dealData.mp_total_subtotal && (
-                        <Text>Subtotal: {formatCurrency(Number(dealData.mp_total_subtotal))}</Text>
-                      )}
-                      {dealData.mp_total_iva && (
-                        <Text>IVA (21%): {formatCurrency(Number(dealData.mp_total_iva))}</Text>
-                      )}
-                      {dealData.mp_total_final && (
-                        <Text style={{ fontWeight: 'bold', fontSize: '16px' }}>
-                          TOTAL: {formatCurrency(Number(dealData.mp_total_final))}
-                        </Text>
-                      )}
-                      {dealData.mp_tiene_items_a_cotizar === 'true' && (
-                        <Text style={{ color: '#856404', fontSize: '12px', marginTop: '4px' }}>
-                          * Los productos "A COTIZAR" no se incluyen en el total
-                        </Text>
-                      )}
-                    </Box>
-                  )}
-                </Box>
-              );
+                      </Box>
+                    ))}
+                  </Box>
+                );
+              } catch (error) {
+                return (
+                  <Alert title="Error" variant="error">
+                    <Text>Error al procesar los items del presupuesto</Text>
+                  </Alert>
+                );
+              }
             })()}
+          </Box>
+        )}
+
+        {/* Totales */}
+        {(dealData.mp_total_subtotal || dealData.mp_total_iva || dealData.mp_total_final || dealData.mp_metros_cuadrados_totales) && (
+          <Box>
+            <Text variant="h4">💰 Totales</Text>
+            {dealData.mp_metros_cuadrados_totales && (
+              <Text>📐 Superficie Total: {dealData.mp_metros_cuadrados_totales} m²</Text>
+            )}
+            {dealData.mp_total_subtotal && (
+              <Text>Subtotal: {formatCurrency(Number(dealData.mp_total_subtotal))}</Text>
+            )}
+            {dealData.mp_total_iva && (
+              <Text>IVA (21%): {formatCurrency(Number(dealData.mp_total_iva))}</Text>
+            )}
+            {dealData.mp_total_final && (
+              <Text>TOTAL: {formatCurrency(Number(dealData.mp_total_final))}</Text>
+            )}
+            {dealData.mp_tiene_items_a_cotizar === 'true' && (
+              <Text>* Los productos "A COTIZAR" no se incluyen en el total</Text>
+            )}
           </Box>
         )}
 
@@ -397,16 +419,7 @@ const PresuCard = ({ context, actions }: any) => {
         {dealData?.mp_condiciones_pago && (
           <Box>
             <Text variant="h4">💳 Condiciones de Pago</Text>
-            <Box style={{ 
-              border: '1px solid #e1e5e9', 
-              borderRadius: '4px', 
-              padding: '12px',
-              backgroundColor: '#f8f9fa'
-            }}>
-              <Text style={{ whiteSpace: 'pre-line' }}>
-                {dealData.mp_condiciones_pago}
-              </Text>
-            </Box>
+            <Text>{dealData.mp_condiciones_pago}</Text>
           </Box>
         )}
 
@@ -414,16 +427,7 @@ const PresuCard = ({ context, actions }: any) => {
         {dealData?.mp_condiciones_entrega && (
           <Box>
             <Text variant="h4">🚚 Condiciones de Entrega</Text>
-            <Box style={{ 
-              border: '1px solid #e1e5e9', 
-              borderRadius: '4px', 
-              padding: '12px',
-              backgroundColor: '#f8f9fa'
-            }}>
-              <Text style={{ whiteSpace: 'pre-line' }}>
-                {dealData.mp_condiciones_entrega}
-              </Text>
-            </Box>
+            <Text>{dealData.mp_condiciones_entrega}</Text>
           </Box>
         )}
 
