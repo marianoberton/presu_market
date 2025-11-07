@@ -124,3 +124,25 @@ La aplicación está lista para uso en producción y puede ser extendida fácilm
 - ✅ Estado local por producto para preservar lo tipeado (sin borrar separadores)
 - ✅ Normalización a punto para cálculos y actualización inmediata de totales
 - **Links**: `src/components/forms/productos-form.tsx`, `memory-bank/03-active-decisions.md`
+
+### [2025-11-07] Nuevo tipo de producto: "otros items"
+- ✅ Agregado tipo libre `otros-items` para ítems sin dimensiones (fletes, servicios, accesorios)
+- ✅ Precio manual por ítem, subtotal = precio × cantidad
+- ✅ Excluido del cálculo de m² totales, sin calidad/color ni remarcación
+- ✅ Compatible con marca "A COTIZAR"
+- **Links**: `src/lib/types.ts`, `src/components/forms/productos-form.tsx`, `src/lib/calculations.ts`, `memory-bank/03-active-decisions.md`
+
+### [2025-11-07] m² manual por ítem "otros-items" y envío a HubSpot
+- ✅ Añadido input obligatorio dentro del producto `otros-items`: "Total m² del ítem"
+- ✅ Soporte de decimales (coma/punto) con estado local y normalización
+- ✅ Cálculo de m² totales suma: superficie calculada de ítems con dimensiones + m² manuales de `otros-items`
+- ✅ Validaciones actualizadas: cada `otros-items` debe tener m² > 0
+- ✅ HubSpot usa el total calculado en `mp_metros_cuadrados_totales`
+- **Links**: `src/components/forms/productos-form.tsx`, `src/lib/types.ts`, `src/lib/calculations.ts`, `memory-bank/03-active-decisions.md`
+
+### [2025-11-07] Nuevo tipo de producto: "dos planchas una caja"
+- ✅ Agregado tipo `dos-planchas-una-caja` en el selector de productos
+- ✅ Implementada fórmula: largo plancha = largo + ancho + 40; ancho plancha = ancho + alto; m² por unidad = área plancha × 2
+- ✅ UI de Medidas de Producción muestra explícitamente `× 2 planchas`
+- ✅ Precio unitario y m² totales integrados sin cambios adicionales
+- **Links**: `src/lib/types.ts`, `src/lib/calculations.ts`, `src/components/forms/medidas-produccion.tsx`, `memory-bank/03-active-decisions.md`

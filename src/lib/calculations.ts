@@ -7,9 +7,9 @@ export function calcularMedidasProduccion(
   largo: number, 
   ancho: number, 
   alto: number, 
-  tipo: 'caja-aleta-simple' | 'plancha' | 'bandeja' | 'cerco' | 'caja-aleta-cruzada-x1' | 'caja-aleta-cruzada-x2' | 'base-telescopica' | 'tapa-telescopica' | 'polimero' | 'sacabocado' = 'caja-aleta-simple'
+  tipo: 'caja-aleta-simple' | 'plancha' | 'bandeja' | 'cerco' | 'caja-aleta-cruzada-x1' | 'caja-aleta-cruzada-x2' | 'base-telescopica' | 'tapa-telescopica' | 'polimero' | 'sacabocado' | 'otros-items' | 'dos-planchas-una-caja' = 'caja-aleta-simple'
 ) {
-  if (tipo === 'polimero' || tipo === 'sacabocado') {
+  if (tipo === 'polimero' || tipo === 'sacabocado' || tipo === 'otros-items') {
     // Para polímero y sacabocado, no se calculan medidas de producción especiales
     return {
       largoProduccion: largo,
@@ -38,6 +38,16 @@ export function calcularMedidasProduccion(
       // ANCHO DE PLANCHA: 1 ANCHO + 1 ALTO
       largoProduccion = 2 * largo + 2 * ancho + 40;
       anchoProduccion = ancho + alto;
+      break;
+    
+    case 'dos-planchas-una-caja':
+      // Cajas que requieren dos planchas por unidad.
+      // Largo de plancha: 1 largo + 1 ancho + 40
+      // Ancho de plancha: 1 ancho + 1 alto
+      // Superficie total por unidad: superficie de una plancha × 2
+      largoProduccion = largo + ancho + 40;
+      anchoProduccion = ancho + alto;
+      // Superficie se calculará abajo y se ajustará por ×2
       break;
     
     case 'bandeja':
@@ -78,7 +88,10 @@ export function calcularMedidasProduccion(
       break;
   }
   
-  const superficie = (largoProduccion * anchoProduccion) / 1000000;
+  let superficie = (largoProduccion * anchoProduccion) / 1000000;
+  if (tipo === 'dos-planchas-una-caja') {
+    superficie = superficie * 2; // Dos planchas por caja
+  }
   
   return {
     largoProduccion,
@@ -103,7 +116,7 @@ export function calcularPrecioUnitario(
   alto: number,
   precio: number,
   remarcacion: number = 1,
-  tipo: 'caja-aleta-simple' | 'plancha' | 'bandeja' | 'cerco' | 'caja-aleta-cruzada-x1' | 'caja-aleta-cruzada-x2' | 'base-telescopica' | 'tapa-telescopica' | 'polimero' | 'sacabocado' = 'caja-aleta-simple'
+  tipo: 'caja-aleta-simple' | 'plancha' | 'bandeja' | 'cerco' | 'caja-aleta-cruzada-x1' | 'caja-aleta-cruzada-x2' | 'base-telescopica' | 'tapa-telescopica' | 'polimero' | 'sacabocado' | 'otros-items' | 'dos-planchas-una-caja' = 'caja-aleta-simple'
 ) {
   const medidas = calcularMedidasProduccion(largo, ancho, alto, tipo);
   return medidas.superficie * precio * remarcacion;
@@ -176,9 +189,9 @@ export function generarLabelsCalculos(
   largo: number,
   ancho: number,
   alto: number,
-  tipo: 'caja-aleta-simple' | 'plancha' | 'bandeja' | 'cerco' | 'caja-aleta-cruzada-x1' | 'caja-aleta-cruzada-x2' | 'base-telescopica' | 'tapa-telescopica' | 'polimero' | 'sacabocado'
+  tipo: 'caja-aleta-simple' | 'plancha' | 'bandeja' | 'cerco' | 'caja-aleta-cruzada-x1' | 'caja-aleta-cruzada-x2' | 'base-telescopica' | 'tapa-telescopica' | 'polimero' | 'sacabocado' | 'otros-items' | 'dos-planchas-una-caja'
 ) {
-  if (tipo === 'polimero' || tipo === 'sacabocado') {
+  if (tipo === 'polimero' || tipo === 'sacabocado' || tipo === 'otros-items') {
     return {
       largoLabel: `${largo} cm`,
       anchoLabel: `${ancho} cm`
@@ -199,6 +212,11 @@ export function generarLabelsCalculos(
   switch (tipo) {
     case 'caja-aleta-simple':
       largoLabel = `(${largo}×2 + ${ancho}×2 + 40)`;
+      anchoLabel = `(${ancho} + ${alto})`;
+      break;
+    
+    case 'dos-planchas-una-caja':
+      largoLabel = `(${largo} + ${ancho} + 40)`;
       anchoLabel = `(${ancho} + ${alto})`;
       break;
     
@@ -255,12 +273,16 @@ export function calcularMetrosCuadradosTotales(productos: ProductoData[]): numbe
   productos.forEach(producto => {
     // Solo calcular m² para productos que tienen dimensiones físicas
     // Excluir polímero y sacabocado ya que no tienen dimensiones físicas relevantes
-    if (producto.tipo !== 'polimero' && producto.tipo !== 'sacabocado') {
+    if (producto.tipo !== 'polimero' && producto.tipo !== 'sacabocado' && producto.tipo !== 'otros-items') {
       // Usar la función existente para obtener la superficie de producción
       const medidas = calcularMedidasProduccion(producto.largo, producto.ancho, producto.alto, producto.tipo);
       const superficieTotalProducto = medidas.superficie * producto.cantidad;
       
       metrosCuadradosTotales += superficieTotalProducto;
+    } else if (producto.tipo === 'otros-items') {
+      // Para "otros-items", sumar el campo manual de m² totales del ítem
+      const m2Manual = producto.metrosCuadradosManual || 0;
+      metrosCuadradosTotales += m2Manual;
     }
   });
 

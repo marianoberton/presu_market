@@ -6,7 +6,7 @@ interface MedidasProduccionProps {
   largo: number;
   ancho: number;
   alto: number;
-  tipo: 'caja-aleta-simple' | 'plancha' | 'bandeja' | 'cerco' | 'caja-aleta-cruzada-x1' | 'caja-aleta-cruzada-x2' | 'base-telescopica' | 'tapa-telescopica' | 'polimero' | 'sacabocado';
+  tipo: 'caja-aleta-simple' | 'plancha' | 'bandeja' | 'cerco' | 'caja-aleta-cruzada-x1' | 'caja-aleta-cruzada-x2' | 'base-telescopica' | 'tapa-telescopica' | 'polimero' | 'sacabocado' | 'dos-planchas-una-caja';
 }
 
 export const MedidasProduccion: React.FC<MedidasProduccionProps> = ({
@@ -54,7 +54,9 @@ export const MedidasProduccion: React.FC<MedidasProduccionProps> = ({
             {medidas.superficie.toFixed(4)} m²
           </div>
           <div className="text-xs text-gray-400 mt-1">
-            ({medidas.largoProduccion.toFixed(1)} × {medidas.anchoProduccion.toFixed(1)} ÷ 1M)
+            {tipo === 'dos-planchas-una-caja'
+              ? `(${medidas.largoProduccion.toFixed(1)} × ${medidas.anchoProduccion.toFixed(1)} ÷ 1M × 2 planchas)`
+              : `(${medidas.largoProduccion.toFixed(1)} × ${medidas.anchoProduccion.toFixed(1)} ÷ 1M)`}
           </div>
         </div>
       </div>

@@ -183,6 +183,25 @@
 - **Tiempo para completar presupuesto**: < 2 minutos
 - **Errores de validación**: Feedback inmediato
 - **Responsive**: Funcional en tablets (768px+)
+
+### [2025-11-07] Nuevo tipo: "dos planchas una caja"
+**Contexto**: Algunas cajas requieren dos planchas por unidad, especialmente cuando el largo de plancha supera ~2550mm. Se necesita calcular superficie en base a la plancha y multiplicar por 2.
+**Alternativas consideradas**:
+- A) Reutilizar fórmula de caja estándar sin multiplicar
+- B) Detectar automáticamente por largo y aplicar ×2
+- C) Nuevo tipo explícito para operar con ×2
+
+**Decisión**: Se incorpora el tipo de producto `dos-planchas-una-caja` con fórmula específica: `largo de plancha = largo + ancho + 40`, `ancho de plancha = ancho + alto` y `m² por unidad = (largo_plancha × ancho_plancha / 1e6) × 2`.
+**Rationale**:
+- Claridad operativa: el vendedor selecciona el tipo consciente de que implica dos planchas
+- Evita suposiciones automáticas y posibles errores por umbral
+- Se integra de forma limpia con el resto de fórmulas y cálculos existentes
+
+**Consecuencias**:
+- Cambios en `src/lib/types.ts`: se agrega el valor `dos-planchas-una-caja` a `ProductoData.tipo` y a `TIPO_PRODUCTO_OPTIONS`
+- Cambios en `src/lib/calculations.ts`: nueva rama en `calcularMedidasProduccion` y labels en `generarLabelsCalculos`
+- Cambios en `src/components/forms/medidas-produccion.tsx`: se muestra explícitamente `× 2 planchas` en la descripción de superficie
+- Se mantiene el flujo de precio unitario: `superficie × precio × remarcación`
 ### [2025-11-06] Manejo de decimales en inputs numéricos
 **Contexto**: Usuarios ingresan valores con punto o coma (precio por m² y remarcación). Se requiere precisión en cálculos y buena UX sin que se borre el separador al tipear.
 **Alternativas consideradas**: 
@@ -198,5 +217,33 @@
 
 **Consecuencias**:
 - Cambios en `src/components/forms/productos-form.tsx` para `Precio $/m²` y `Remarcación`
+
+### [2025-11-07] m² manual por ítem "otros-items" y uso en HubSpot
+**Contexto**: Los ítems libres "otros-items" no tienen dimensiones físicas para calcular m². Se necesita capturar manualmente el m² que aportan al total.
+**Alternativas consideradas**:
+- A) Excluir completamente "otros-items" del cómputo de m²
+- B) Campo global de m² manual (no ligado a ítems)
+- C) Campo manual por ítem "otros-items" y sumarlo al total
+
+**Decisión**: Implementar un campo obligatorio "Total m² del ítem" dentro de cada producto de tipo `otros-items`. El cálculo de m² totales suma los m² calculados automáticamente de los ítems con dimensiones + los m² manuales de cada `otros-items`. Este total se envía a HubSpot en `mp_metros_cuadrados_totales`.
+**Rationale**:
+- Mantiene el origen del dato de m² asociado al ítem correspondiente
+- Evita dependencias de un campo global que puede ser ambiguo
+- Preserva el flujo existente para tipos con fórmulas de superficie
+
+**Consecuencias**:
+- Cambios en `src/components/forms/productos-form.tsx`: nuevo input decimal por ítem `otros-items`
+- Cambios en `src/lib/types.ts`: propiedad `metrosCuadradosManual` en `ProductoData`
+- Cambios en `src/lib/calculations.ts`: sumar `metrosCuadradosManual` de `otros-items` al total
 - Recalculos automáticos se mantienen (precio unitario y subtotal)
 - Sin impacto en PDF y HubSpot (números siguen en punto)
+
+### [2025-11-07] Tipo de producto "otros items"
+**Contexto**: Necesitamos registrar ítems libres que no dependen de medidas ni calidad.
+**Alternativas consideradas**: Extender tipos existentes / crear tipo libre sin dimensiones / usar texto libre sin precio.
+**Decisión**: Se agrega el tipo de producto `otros-items` con precio manual y sin dimensiones, sin calidad/color ni remarcación.
+**Rationale**: Mejora UX para ítems varios (fletes, servicios, accesorios) evitando campos irrelevantes.
+**Consecuencias**:
+- No participa del cálculo de m² totales.
+- Subtotal se calcula como `precio × cantidad`.
+- Se puede marcar como "A COTIZAR" como los demás.

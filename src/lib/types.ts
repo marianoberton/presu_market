@@ -10,7 +10,7 @@ export interface ClienteData {
 export interface ProductoData {
   id: string;
   descripcion: string;
-  tipo: 'caja-aleta-simple' | 'plancha' | 'bandeja' | 'cerco' | 'caja-aleta-cruzada-x1' | 'caja-aleta-cruzada-x2' | 'base-telescopica' | 'tapa-telescopica' | 'polimero' | 'sacabocado';
+  tipo: 'caja-aleta-simple' | 'plancha' | 'bandeja' | 'cerco' | 'caja-aleta-cruzada-x1' | 'caja-aleta-cruzada-x2' | 'base-telescopica' | 'tapa-telescopica' | 'polimero' | 'sacabocado' | 'otros-items' | 'dos-planchas-una-caja';
   largo: number;
   ancho: number;
   alto: number;
@@ -24,6 +24,8 @@ export interface ProductoData {
   // Campos específicos para polímero
   colores?: number; // Cantidad de colores para polímero
   aCotizar?: boolean; // Indica si el precio es "A COTIZAR"
+  // Campo específico para "otros-items": m² totales del ítem (manual)
+  metrosCuadradosManual?: number;
 }
 
 export interface CondicionesData {
@@ -73,7 +75,9 @@ export const TIPO_PRODUCTO_OPTIONS = [
   { value: 'base-telescopica', label: 'Base telescópica' },
   { value: 'tapa-telescopica', label: 'Tapa telescópica' },
   { value: 'polimero', label: 'Polímero' },
-  { value: 'sacabocado', label: 'Sacabocado' }
+  { value: 'sacabocado', label: 'Sacabocado' },
+  { value: 'otros-items', label: 'Otros items' },
+  { value: 'dos-planchas-una-caja', label: 'Dos planchas una caja' }
 ] as const;
 
 export const CALIDAD_OPTIONS = [

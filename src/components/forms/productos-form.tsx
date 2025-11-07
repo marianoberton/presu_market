@@ -20,6 +20,10 @@ export function ProductosForm({ productos, onChange }: ProductosFormProps) {
   // permitiendo escribir decimales con punto o coma sin que se borre el separador.
   const [precioInput, setPrecioInput] = useState<Record<string, string>>({});
   const [remarcacionInput, setRemarcacionInput] = useState<Record<string, string>>({});
+  // Estado local para capturar el valor "raw" de Precio Manual ($) en tipos polimero/sacabocado/otros-items
+  const [precioManualInput, setPrecioManualInput] = useState<Record<string, string>>({});
+  // Estado local para capturar el valor "raw" de m² manual en 'otros-items'
+  const [m2OtrosInput, setM2OtrosInput] = useState<Record<string, string>>({});
 
   // Sincronizar estado local cuando se agregan o eliminan productos
   useEffect(() => {
@@ -56,6 +60,39 @@ export function ProductosForm({ productos, onChange }: ProductosFormProps) {
       return next;
     });
   }, [productos]);
+  useEffect(() => {
+    setPrecioManualInput(prev => {
+      const next = { ...prev };
+      productos.forEach(p => {
+        if (next[p.id] === undefined) {
+          next[p.id] = p.precio === 0 ? '' : p.precio.toString();
+        }
+      });
+      Object.keys(next).forEach(id => {
+        if (!productos.some(p => p.id === id)) {
+          delete next[id];
+        }
+      });
+      return next;
+    });
+  }, [productos]);
+  useEffect(() => {
+    setM2OtrosInput(prev => {
+      const next = { ...prev };
+      productos.forEach(p => {
+        if (next[p.id] === undefined) {
+          const inicial = (p.metrosCuadradosManual ?? 0);
+          next[p.id] = inicial === 0 ? '' : inicial.toString();
+        }
+      });
+      Object.keys(next).forEach(id => {
+        if (!productos.some(p => p.id === id)) {
+          delete next[id];
+        }
+      });
+      return next;
+    });
+  }, [productos]);
   const agregarProducto = () => {
     const nuevoProducto: ProductoData = {
       id: generarIdProducto(),
@@ -72,7 +109,8 @@ export function ProductosForm({ productos, onChange }: ProductosFormProps) {
       precioUnitario: 0,
       subtotal: 0,
       colores: 1,
-      aCotizar: false
+      aCotizar: false,
+      metrosCuadradosManual: 0
     };
     onChange([...productos, nuevoProducto]);
   };
@@ -86,8 +124,8 @@ export function ProductosForm({ productos, onChange }: ProductosFormProps) {
       if (producto.id === id) {
         const productoActualizado = { ...producto, [campo]: valor };
         
-        // Lógica especial para polímero y sacabocado
-        if (campo === 'tipo' && (valor === 'polimero' || valor === 'sacabocado')) {
+        // Lógica especial para polímero, sacabocado y otros-items
+        if (campo === 'tipo' && (valor === 'polimero' || valor === 'sacabocado' || valor === 'otros-items')) {
           // No fijar cantidad en 1 - permitir cantidad variable
           // No establecer automáticamente aCotizar ni precio - permitir control manual
           productoActualizado.colores = productoActualizado.colores || 1; // Default 1 color
@@ -97,8 +135,8 @@ export function ProductosForm({ productos, onChange }: ProductosFormProps) {
         
         // Solo recalcular precio unitario y subtotal si NO estamos actualizando el campo aCotizar
         if (campo !== 'aCotizar') {
-          // Para productos polímero y sacabocado, el precio manual ES el precio unitario
-          if (productoActualizado.tipo === 'polimero' || productoActualizado.tipo === 'sacabocado') {
+          // Para productos polímero, sacabocado y otros-items, el precio manual ES el precio unitario
+          if (productoActualizado.tipo === 'polimero' || productoActualizado.tipo === 'sacabocado' || productoActualizado.tipo === 'otros-items') {
             if (campo === 'precio') {
               productoActualizado.precioUnitario = Number(valor);
             }
@@ -130,7 +168,7 @@ export function ProductosForm({ productos, onChange }: ProductosFormProps) {
             productoActualizado.subtotal = 0; // Subtotal 0 para productos "A COTIZAR"
           } else {
             // Si se desmarca aCotizar, recalcular subtotal
-            if (productoActualizado.tipo === 'polimero' || productoActualizado.tipo === 'sacabocado') {
+            if (productoActualizado.tipo === 'polimero' || productoActualizado.tipo === 'sacabocado' || productoActualizado.tipo === 'otros-items') {
               productoActualizado.subtotal = productoActualizado.precio * productoActualizado.cantidad;
             } else {
               productoActualizado.subtotal = calcularSubtotalProducto(productoActualizado.cantidad, productoActualizado.precioUnitario);
@@ -269,8 +307,8 @@ export function ProductosForm({ productos, onChange }: ProductosFormProps) {
                 </div>
 
                 {/* Segunda fila - Precio y configuración para polímero y sacabocado */}
-                {(producto.tipo === 'polimero' || producto.tipo === 'sacabocado') && (
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
+                {(producto.tipo === 'polimero' || producto.tipo === 'sacabocado' || producto.tipo === 'otros-items') && (
+                  <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mt-4">
                     {/* Precio Manual */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -278,16 +316,50 @@ export function ProductosForm({ productos, onChange }: ProductosFormProps) {
                       </label>
                       <Input
                         type="text"
-                        value={producto.precio === 0 ? '' : producto.precio.toString()}
+                        inputMode="decimal"
+                        pattern="^\\d*([.,]\\d{0,4})?$"
+                        value={precioManualInput[producto.id] ?? (producto.precio === 0 ? '' : producto.precio.toString())}
                         onChange={(e) => {
-                          const valor = parseFloat(e.target.value) || 0;
-                          actualizarProducto(producto.id, 'precio', valor);
+                          const raw = e.target.value;
+                          if (raw === '' || /^[0-9.,]*$/.test(raw)) {
+                            setPrecioManualInput(prev => ({ ...prev, [producto.id]: raw }));
+                            const normalized = raw.replace(',', '.');
+                            const parsed = parseFloat(normalized);
+                            actualizarProducto(producto.id, 'precio', isNaN(parsed) ? 0 : parsed);
+                          }
                         }}
-                        placeholder="0.00"
+                        placeholder="0,00"
                         className="w-full"
                         disabled={producto.aCotizar}
                       />
                     </div>
+
+                    {/* Total m² del ítem (solo otros-items) */}
+                    {producto.tipo === 'otros-items' && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Total m² del ítem
+                        </label>
+                        <Input
+                          type="text"
+                          inputMode="decimal"
+                          pattern="^\\d*([.,]\\d{0,4})?$"
+                          value={m2OtrosInput[producto.id] ?? ((producto.metrosCuadradosManual ?? 0) === 0 ? '' : (producto.metrosCuadradosManual ?? 0).toString())}
+                          onChange={(e) => {
+                            const raw = e.target.value;
+                            if (raw === '' || /^[0-9.,]*$/.test(raw)) {
+                              setM2OtrosInput(prev => ({ ...prev, [producto.id]: raw }));
+                              const normalized = raw.replace(',', '.');
+                              const parsed = parseFloat(normalized);
+                              actualizarProducto(producto.id, 'metrosCuadradosManual', isNaN(parsed) ? 0 : parsed);
+                            }
+                          }}
+                          placeholder="Ej: 12,50"
+                          className="w-full"
+                        />
+                        <p className="mt-1 text-xs text-gray-500">Este valor se suma al m² total del presupuesto.</p>
+                      </div>
+                    )}
 
                     {/* Checkbox A Cotizar */}
                     <div className="flex items-center space-x-2 mt-6">
@@ -322,7 +394,7 @@ export function ProductosForm({ productos, onChange }: ProductosFormProps) {
                 )}
 
                 {/* Segunda fila - Precio $/m² y Remarcación para otros productos */}
-                {producto.tipo !== 'polimero' && producto.tipo !== 'sacabocado' && (
+                {producto.tipo !== 'polimero' && producto.tipo !== 'sacabocado' && producto.tipo !== 'otros-items' && (
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
                     {/* Precio $/m² */}
                     <div>
@@ -399,7 +471,7 @@ export function ProductosForm({ productos, onChange }: ProductosFormProps) {
                 )}
 
                 {/* Tercera fila - Dimensiones (Solo para productos que no son polímero ni sacabocado) */}
-                {producto.tipo !== 'polimero' && producto.tipo !== 'sacabocado' && (
+                {producto.tipo !== 'polimero' && producto.tipo !== 'sacabocado' && producto.tipo !== 'otros-items' && (
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -507,7 +579,7 @@ export function ProductosForm({ productos, onChange }: ProductosFormProps) {
                 )}
 
                 {/* Cuarta fila - Subtotal */}
-                {producto.tipo !== 'polimero' && producto.tipo !== 'sacabocado' && (
+                {producto.tipo !== 'polimero' && producto.tipo !== 'sacabocado' && producto.tipo !== 'otros-items' && (
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
                     <div></div> {/* Espaciador */}
                     <div></div> {/* Espaciador */}
@@ -525,7 +597,7 @@ export function ProductosForm({ productos, onChange }: ProductosFormProps) {
                 )}
 
                 {/* Subtotal para productos polímero y sacabocado */}
-                {(producto.tipo === 'polimero' || producto.tipo === 'sacabocado') && (
+                {(producto.tipo === 'polimero' || producto.tipo === 'sacabocado' || producto.tipo === 'otros-items') && (
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
                     <div></div> {/* Espaciador */}
                     <div></div> {/* Espaciador */}
@@ -548,7 +620,7 @@ export function ProductosForm({ productos, onChange }: ProductosFormProps) {
                 )}
 
                   {/* Medidas de Producción - Solo para productos que no son polímero ni sacabocado */}
-                  {producto.tipo !== 'polimero' && producto.tipo !== 'sacabocado' && (
+                  {producto.tipo !== 'polimero' && producto.tipo !== 'sacabocado' && producto.tipo !== 'otros-items' && (
                     <div className="mt-4">
                       <MedidasProduccion 
                         largo={producto.largo}
