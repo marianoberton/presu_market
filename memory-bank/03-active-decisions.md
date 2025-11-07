@@ -183,3 +183,20 @@
 - **Tiempo para completar presupuesto**: < 2 minutos
 - **Errores de validación**: Feedback inmediato
 - **Responsive**: Funcional en tablets (768px+)
+### [2025-11-06] Manejo de decimales en inputs numéricos
+**Contexto**: Usuarios ingresan valores con punto o coma (precio por m² y remarcación). Se requiere precisión en cálculos y buena UX sin que se borre el separador al tipear.
+**Alternativas consideradas**: 
+- A) Aceptar solo punto como separador decimal
+- B) Aceptar punto y coma con normalización y estado local
+- C) Inputs `type=number` nativos
+
+**Decisión**: Aceptar punto y coma; normalizar a punto para cálculos y usar estado local por producto para preservar el valor tipeado.
+**Rationale**:
+- Mejora la UX en teclado latino y evita “saltos” del input
+- Mantiene consistencia en cálculos (usa `parseFloat` sobre valor normalizado)
+- Evita problemas de `type=number` (variaciones entre navegadores)
+
+**Consecuencias**:
+- Cambios en `src/components/forms/productos-form.tsx` para `Precio $/m²` y `Remarcación`
+- Recalculos automáticos se mantienen (precio unitario y subtotal)
+- Sin impacto en PDF y HubSpot (números siguen en punto)

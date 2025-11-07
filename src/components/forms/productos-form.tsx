@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Plus, Trash2 } from 'lucide-react';
 import { calcularSubtotalProducto, formatearMoneda, generarIdProducto, calcularPrecioUnitario } from '@/lib/calculations';
 import { MedidasProduccion } from './medidas-produccion';
+import { useEffect, useState } from 'react';
 
 interface ProductosFormProps {
   productos: ProductoData[];
@@ -15,6 +16,46 @@ interface ProductosFormProps {
 }
 
 export function ProductosForm({ productos, onChange }: ProductosFormProps) {
+  // Estado local para capturar el valor "raw" del input de Precio $/m² por producto,
+  // permitiendo escribir decimales con punto o coma sin que se borre el separador.
+  const [precioInput, setPrecioInput] = useState<Record<string, string>>({});
+  const [remarcacionInput, setRemarcacionInput] = useState<Record<string, string>>({});
+
+  // Sincronizar estado local cuando se agregan o eliminan productos
+  useEffect(() => {
+    setPrecioInput(prev => {
+      const next = { ...prev };
+      // Inicializar entradas nuevas
+      productos.forEach(p => {
+        if (next[p.id] === undefined) {
+          next[p.id] = p.precio === 0 ? '' : p.precio.toString();
+        }
+      });
+      // Eliminar entradas de productos removidos
+      Object.keys(next).forEach(id => {
+        if (!productos.some(p => p.id === id)) {
+          delete next[id];
+        }
+      });
+      return next;
+    });
+  }, [productos]);
+  useEffect(() => {
+    setRemarcacionInput(prev => {
+      const next = { ...prev };
+      productos.forEach(p => {
+        if (next[p.id] === undefined) {
+          next[p.id] = p.remarcacion === 0 ? '' : p.remarcacion.toString();
+        }
+      });
+      Object.keys(next).forEach(id => {
+        if (!productos.some(p => p.id === id)) {
+          delete next[id];
+        }
+      });
+      return next;
+    });
+  }, [productos]);
   const agregarProducto = () => {
     const nuevoProducto: ProductoData = {
       id: generarIdProducto(),
@@ -290,12 +331,20 @@ export function ProductosForm({ productos, onChange }: ProductosFormProps) {
                       </label>
                       <Input
                         type="text"
-                        value={producto.precio === 0 ? '' : producto.precio.toString()}
+                        inputMode="decimal"
+                        pattern="^\\d*([.,]\\d{0,4})?$"
+                        value={precioInput[producto.id] ?? (producto.precio === 0 ? '' : producto.precio.toString())}
                         onChange={(e) => {
-                          const valor = parseFloat(e.target.value) || 0;
-                          actualizarProducto(producto.id, 'precio', valor);
+                          const raw = e.target.value;
+                          // Permitir solo dígitos y separadores de decimales (coma o punto)
+                          if (raw === '' || /^[0-9.,]*$/.test(raw)) {
+                            setPrecioInput(prev => ({ ...prev, [producto.id]: raw }));
+                            const normalized = raw.replace(',', '.');
+                            const parsed = parseFloat(normalized);
+                            actualizarProducto(producto.id, 'precio', isNaN(parsed) ? 0 : parsed);
+                          }
                         }}
-                        placeholder="0.00"
+                        placeholder="0,00"
                         className="w-full"
                       />
                     </div>
@@ -307,15 +356,19 @@ export function ProductosForm({ productos, onChange }: ProductosFormProps) {
                       </label>
                       <Input
                         type="text"
-                        value={producto.remarcacion === 0 ? '' : producto.remarcacion.toString()}
+                        inputMode="decimal"
+                        pattern="^\\d*([.,]\\d{0,4})?$"
+                        value={remarcacionInput[producto.id] ?? (producto.remarcacion === 0 ? '' : producto.remarcacion.toString())}
                         onChange={(e) => {
-                          const valor = e.target.value;
-                          if (valor === '' || /^\d*\.?\d*$/.test(valor)) {
-                            const numeroValor = valor === '' ? 0 : parseFloat(valor);
-                            actualizarProducto(producto.id, 'remarcacion', isNaN(numeroValor) ? 0 : numeroValor);
+                          const raw = e.target.value;
+                          if (raw === '' || /^[0-9.,]*$/.test(raw)) {
+                            setRemarcacionInput(prev => ({ ...prev, [producto.id]: raw }));
+                            const normalized = raw.replace(',', '.');
+                            const parsed = parseFloat(normalized);
+                            actualizarProducto(producto.id, 'remarcacion', isNaN(parsed) ? 0 : parsed);
                           }
                         }}
-                        placeholder="1"
+                        placeholder="1,00"
                         className="w-full"
                       />
                     </div>

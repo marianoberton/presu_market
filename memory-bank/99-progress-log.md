@@ -119,3 +119,8 @@ El proyecto **Generador de Presupuestos Market Paper** ha sido completado exitos
 ✅ **Documentación completa** siguiendo las reglas del usuario  
 
 La aplicación está lista para uso en producción y puede ser extendida fácilmente con las mejoras futuras sugeridas.
+### [2025-11-06] Soporte de decimales en Precio $/m² y Remarcación
+- ✅ Inputs actualizados para aceptar coma y punto como separador decimal
+- ✅ Estado local por producto para preservar lo tipeado (sin borrar separadores)
+- ✅ Normalización a punto para cálculos y actualización inmediata de totales
+- **Links**: `src/components/forms/productos-form.tsx`, `memory-bank/03-active-decisions.md`
