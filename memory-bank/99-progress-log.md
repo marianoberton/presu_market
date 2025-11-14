@@ -158,6 +158,8 @@ La aplicación está lista para uso en producción y puede ser extendida fácilm
 - UI: `DealSelector` muestra aviso “falta link de ManyChat” y el modal pide solo el link; se autocompletan Page ID y User ID.
 [2025-11-14] HubSpot asociaciones v4: corregido mapeo `toObjectId` en `/api/hubspot/test-associations` (devolvía 0 contactos por leer `id`). Se añade `?debug=true` para inspección de respuestas y errores. Verificado `dealId=48864862726`: 1 contacto, 0 empresas. UI ajustada para contar unión de empresas también en `updateContactPropsAndAssociate`. Links: N/A
 [2025-11-14] Build: habilitado `eslint.ignoreDuringBuilds = true` en `next.config.ts` para permitir build y despliegue en Vercel mientras se corrigen tipos (no-explicit-any) en rutas HubSpot. Links: N/A
+[2025-11-14] Producción: error `Unexpected token '<'` al obtener deals. Se fuerza `runtime='nodejs'` en `/api/hubspot/deals` y el cliente maneja respuestas no-JSON con mensaje y reintento. Links: N/A
+[2025-11-14] Fix asociaciones en `/api/hubspot/deals`: usar `toObjectId ?? id` y filtrar `undefined` para evitar errores de HubSpot `Some required fields were not set: [id]` en batch/read de contactos y empresas. Links: N/A
 [2025-11-14] HubSpot contactos: scripts para propiedades y mejoras de error
 - ✅ Añadidos scripts `scripts/check-hubspot-contact-properties.js` y `scripts/create-hubspot-contact-properties.js` para verificar/crear `mp_live_chat_url`, `mp_manychat_user_id`, `mp_page_id` en CONTACTOS.
 - ✅ `02-tech-context.md` documenta cómo ejecutarlos y las env vars necesarias.

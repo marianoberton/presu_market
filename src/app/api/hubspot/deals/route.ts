@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { HubSpotDealsResponse, ApiResponse } from '@/lib/types/presupuesto';
 
+// Asegurar ejecución en Node.js para acceso estable a process.env y fetch
+export const runtime = 'nodejs';
+
 export async function GET() {
   try {
     const token = process.env.HUBSPOT_TOKEN;
@@ -122,7 +125,10 @@ export async function GET() {
           if (associationsData.results) {
             for (const result of associationsData.results) {
               if (result.to && result.to.length > 0) {
-                dealToContactsMap.set(result.from.id, result.to.map((contact: { id: string }) => contact.id));
+                const contactIds = result.to
+                  .map((contact: { id?: string; toObjectId?: string }) => String(contact?.toObjectId ?? contact?.id ?? ''))
+                  .filter(Boolean);
+                dealToContactsMap.set(result.from.id, contactIds);
               }
             }
           }
@@ -130,7 +136,7 @@ export async function GET() {
           // Obtener datos de todos los contactos únicos
           allContactIds = Array.from(new Set(
             Array.from(dealToContactsMap.values()).flat()
-          ));
+          )).filter(Boolean);
 
           if (allContactIds.length > 0) {
             const contactsResponse = await fetch('https://api.hubapi.com/crm/v3/objects/contacts/batch/read', {
@@ -140,7 +146,7 @@ export async function GET() {
                 'Content-Type': 'application/json'
               },
               body: JSON.stringify({
-                inputs: allContactIds.map(id => ({ id })),
+                inputs: allContactIds.map(id => ({ id: String(id) })),
                 properties: ['firstname', 'lastname', 'email', 'phone']
               })
             });
@@ -186,7 +192,7 @@ export async function GET() {
                 }
               }
             } else {
-              console.error('Error al obtener datos de contactos:', associationsResponse.status, await contactsResponse.text());
+              console.error('Error al obtener datos de contactos:', contactsResponse.status, await contactsResponse.text());
             }
           }
         } else {
@@ -216,14 +222,17 @@ export async function GET() {
           if (associationsCompaniesData.results) {
             for (const result of associationsCompaniesData.results) {
               if (result.to && result.to.length > 0) {
-                dealToCompaniesMap.set(result.from.id, result.to.map((company: { id: string }) => company.id));
+                const companyIds = result.to
+                  .map((company: { id?: string; toObjectId?: string }) => String(company?.toObjectId ?? company?.id ?? ''))
+                  .filter(Boolean);
+                dealToCompaniesMap.set(result.from.id, companyIds);
               }
             }
           }
 
           const allCompanyIds = Array.from(new Set(
             Array.from(dealToCompaniesMap.values()).flat()
-          ));
+          )).filter(Boolean);
 
           if (allCompanyIds.length > 0) {
             const companiesResponse = await fetch('https://api.hubapi.com/crm/v3/objects/companies/batch/read', {
@@ -233,7 +242,7 @@ export async function GET() {
                 'Content-Type': 'application/json'
               },
               body: JSON.stringify({
-                inputs: allCompanyIds.map(id => ({ id })),
+                inputs: allCompanyIds.map(id => ({ id: String(id) })),
                 properties: ['name', 'domain', 'website', 'phone']
               })
             });
@@ -284,7 +293,7 @@ export async function GET() {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ inputs: allContactIds.map(id => ({ id })) })
+            body: JSON.stringify({ inputs: allContactIds.map(id => ({ id: String(id) })) })
           });
 
           if (contactCompaniesAssocResp.ok) {
@@ -294,14 +303,17 @@ export async function GET() {
             if (contactCompaniesAssocData.results) {
               for (const result of contactCompaniesAssocData.results) {
                 if (result.to && result.to.length > 0) {
-                  contactToCompaniesMap.set(result.from.id, result.to.map((company: { id: string }) => company.id));
+                  const companyIds = result.to
+                    .map((company: { id?: string; toObjectId?: string }) => String(company?.toObjectId ?? company?.id ?? ''))
+                    .filter(Boolean);
+                  contactToCompaniesMap.set(result.from.id, companyIds);
                 }
               }
             }
 
             const allCompanyIdsFromContacts = Array.from(new Set(
               Array.from(contactToCompaniesMap.values()).flat()
-            ));
+            )).filter(Boolean);
 
             if (allCompanyIdsFromContacts.length > 0) {
               const companiesFromContactsResp = await fetch('https://api.hubapi.com/crm/v3/objects/companies/batch/read', {
@@ -311,7 +323,7 @@ export async function GET() {
                   'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                  inputs: allCompanyIdsFromContacts.map(id => ({ id })),
+                  inputs: allCompanyIdsFromContacts.map(id => ({ id: String(id) })),
                   properties: ['name', 'domain', 'website', 'phone']
                 })
               });

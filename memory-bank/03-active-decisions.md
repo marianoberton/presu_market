@@ -359,3 +359,14 @@ Consecuencias: Aumenta la carga de la petición inicial de deals pero evita otra
 **Consecuencias**:
 - `next.config.ts` actualizado. Vercel construye aunque existan errores de ESLint.
 - Se agenda PR para saneo de tipos en `src/app/api/hubspot/test-associations/route.ts` y UI relacionada.
+### [2025-11-14] API Deals: forzar runtime Node.js
+**Contexto**: En producción, `/api/hubspot/deals` devolvía HTML causando `Unexpected token '<'`. Edge runtime puede comportarse distinto con `process.env` y errores no capturados.
+**Alternativas consideradas**:
+- A) Mantener Edge y refactor para compatibilidad
+- B) Forzar `runtime = 'nodejs'` en la ruta
+- C) Reescribir como función serverless separada
+**Decisión**: Forzar Node.js con `export const runtime = 'nodejs'` en `src/app/api/hubspot/deals/route.ts`.
+**Rationale**: Garantiza acceso estable a `process.env` y manejo de errores consistente.
+**Consecuencias**:
+- Menor latencia potencial del Edge, pero mayor previsibilidad.
+- Cliente actualizado para manejar respuestas no‑JSON con mensaje claro.

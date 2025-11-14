@@ -42,7 +42,14 @@ export default function DealSelector({ onDealSelected, selectedDeal, disabled = 
 
     try {
       const response = await fetch('/api/hubspot/deals');
-      const result: ApiResponse<HubSpotDealsResponse> = await response.json();
+      const contentType = response.headers.get('content-type') || '';
+      const isJson = contentType.includes('application/json');
+      const payload = isJson ? await response.json() : await response.text();
+      if (!isJson) {
+        const preview = typeof payload === 'string' ? payload.slice(0, 180) : '';
+        throw new Error(`Respuesta no JSON (${response.status}). Vista previa: ${preview}`);
+      }
+      const result: ApiResponse<HubSpotDealsResponse> = payload;
 
       if (!result.success) {
         throw new Error(result.error || 'Error al cargar deals');
