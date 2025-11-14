@@ -160,6 +160,7 @@ La aplicación está lista para uso en producción y puede ser extendida fácilm
 [2025-11-14] Build: habilitado `eslint.ignoreDuringBuilds = true` en `next.config.ts` para permitir build y despliegue en Vercel mientras se corrigen tipos (no-explicit-any) en rutas HubSpot. Links: N/A
 [2025-11-14] Producción: error `Unexpected token '<'` al obtener deals. Se fuerza `runtime='nodejs'` en `/api/hubspot/deals` y el cliente maneja respuestas no-JSON con mensaje y reintento. Links: N/A
 [2025-11-14] Fix asociaciones en `/api/hubspot/deals`: usar `toObjectId ?? id` y filtrar `undefined` para evitar errores de HubSpot `Some required fields were not set: [id]` en batch/read de contactos y empresas. Links: N/A
+[2025-11-14] Producción: selección de deal devolvía HTML por 404 en `/api/hubspot/test-associations`; se añadió `runtime='nodejs'` a la ruta y el cliente ahora detecta respuestas no‑JSON en la carga de asociaciones, mostrando mensaje claro en lugar de crash. Verificado 404 con `curl -I` y plan de redeploy en Vercel.
 [2025-11-14] HubSpot contactos: scripts para propiedades y mejoras de error
 - ✅ Añadidos scripts `scripts/check-hubspot-contact-properties.js` y `scripts/create-hubspot-contact-properties.js` para verificar/crear `mp_live_chat_url`, `mp_manychat_user_id`, `mp_page_id` en CONTACTOS.
 - ✅ `02-tech-context.md` documenta cómo ejecutarlos y las env vars necesarias.

@@ -98,7 +98,13 @@ export default function DealSelector({ onDealSelected, selectedDeal, disabled = 
       try {
         const url = `/api/hubspot/test-associations?dealId=${selectedDeal.id}&fallback=true`;
         const res = await fetch(url);
-        const raw = await res.json();
+        const contentType = res.headers.get('content-type') || '';
+        const isJson = contentType.includes('application/json');
+        const raw = isJson ? await res.json() : await res.text();
+        if (!isJson) {
+          const preview = typeof raw === 'string' ? raw.slice(0, 180) : '';
+          throw new Error(`Respuesta no JSON (${res.status}). Vista previa: ${preview}`);
+        }
         if (!res.ok) throw new Error(raw?.error || 'Error al cargar asociaciones');
         const payload = raw?.data ?? raw;
 

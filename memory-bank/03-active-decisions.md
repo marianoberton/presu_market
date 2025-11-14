@@ -370,3 +370,15 @@ Consecuencias: Aumenta la carga de la petición inicial de deals pero evita otra
 **Consecuencias**:
 - Menor latencia potencial del Edge, pero mayor previsibilidad.
 - Cliente actualizado para manejar respuestas no‑JSON con mensaje claro.
+
+### [2025-11-14] API Test-Associations: forzar runtime Node.js
+**Contexto**: Al seleccionar un deal en producción, la UI recibía HTML (404) del endpoint `/api/hubspot/test-associations`, generando `Unexpected token '<'`. Se requiere entorno homogéneo y acceso estable a tokens/env.
+**Alternativas consideradas**:
+- A) Mantener Edge y ajustar manejo de errores
+- B) Forzar `runtime = 'nodejs'` en la ruta
+- C) Unificar lógica en `/api/hubspot/deals` y eliminar la ruta
+**Decisión**: Forzar Node.js con `export const runtime = 'nodejs'` en `src/app/api/hubspot/test-associations/route.ts`, manteniendo la ruta para diagnóstico de asociaciones.
+**Rationale**: Consistencia con otros endpoints, acceso fiable a `process.env` y tokens OAuth, trazabilidad y logs más claros.
+**Consecuencias**:
+- Homogeneidad de runtime para endpoints HubSpot.
+- UI actualizada para detectar respuestas no‑JSON en la carga de asociaciones.
