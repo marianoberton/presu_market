@@ -361,7 +361,7 @@ export default function Home() {
                   ) : (
                     <>
                       <Upload className="mr-2 h-4 w-4" />
-                      <span>Generar y Enviar</span>
+                      <span>Generar</span>
                       <Image 
                         src="/hubspot-1.svg" 
                         alt="HubSpot" 
