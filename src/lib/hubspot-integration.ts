@@ -48,10 +48,11 @@ export async function getAccessToken(): Promise<string | null> {
     if (stored) return stored;
 
     // Fallback para desarrollo: usar token de entorno
+    // Preferir HUBSPOT_TOKEN para mantener consistencia con los endpoints que lo usan directamente
     const envToken =
+      process.env.HUBSPOT_TOKEN ||
       process.env.HUBSPOT_ACCESS_TOKEN ||
       process.env.HUBSPOT_OAUTH_ACCESS_TOKEN ||
-      process.env.HUBSPOT_TOKEN ||
       null;
 
     if (!envToken) {

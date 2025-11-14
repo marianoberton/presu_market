@@ -97,9 +97,16 @@ export default function DealSelector({ onDealSelected, selectedDeal, disabled = 
 
         const contacts = Array.isArray(payload?.contacts) ? payload.contacts : [];
         const companiesFromDeal = Array.isArray(payload?.companiesFromDeal) ? payload.companiesFromDeal : [];
+        const companiesFromContacts = Array.isArray(payload?.companiesFromContacts) ? payload.companiesFromContacts : [];
+        const uniqueCompanyIds = Array.from(
+          new Set([
+            ...companiesFromDeal.map((c: any) => String(c.id)).filter(Boolean),
+            ...companiesFromContacts.map((c: any) => String(c.id)).filter(Boolean),
+          ])
+        );
         setAssocCounts({
           contacts: contacts.length,
-          companies: companiesFromDeal.length,
+          companies: uniqueCompanyIds.length,
         });
         setAssocContactIds(contacts.map((c: any) => String(c.id)).filter(Boolean));
         // Detectar contacto con mp_* faltantes
@@ -154,7 +161,14 @@ export default function DealSelector({ onDealSelected, selectedDeal, disabled = 
       const payload = raw?.data ?? raw;
       const contacts = Array.isArray(payload?.contacts) ? payload.contacts : [];
       const companiesFromDeal = Array.isArray(payload?.companiesFromDeal) ? payload.companiesFromDeal : [];
-      setAssocCounts({ contacts: contacts.length, companies: companiesFromDeal.length });
+      const companiesFromContacts = Array.isArray(payload?.companiesFromContacts) ? payload.companiesFromContacts : [];
+      const uniqueCompanyIds = Array.from(
+        new Set([
+          ...companiesFromDeal.map((c: any) => String(c.id)).filter(Boolean),
+          ...companiesFromContacts.map((c: any) => String(c.id)).filter(Boolean),
+        ])
+      );
+      setAssocCounts({ contacts: contacts.length, companies: uniqueCompanyIds.length });
       setAssocContactIds(contacts.map((c: any) => String(c.id)).filter(Boolean));
     } catch (err: any) {
       alert(err?.message ?? 'Error al crear y asociar el contacto');
@@ -223,7 +237,14 @@ export default function DealSelector({ onDealSelected, selectedDeal, disabled = 
       const payload = raw?.data ?? raw;
       const contacts = Array.isArray(payload?.contacts) ? payload.contacts : [];
       const companiesFromDeal = Array.isArray(payload?.companiesFromDeal) ? payload.companiesFromDeal : [];
-      setAssocCounts({ contacts: contacts.length, companies: companiesFromDeal.length });
+      const companiesFromContacts = Array.isArray(payload?.companiesFromContacts) ? payload.companiesFromContacts : [];
+      const uniqueCompanyIds = Array.from(
+        new Set([
+          ...companiesFromDeal.map((c: any) => String(c.id)).filter(Boolean),
+          ...companiesFromContacts.map((c: any) => String(c.id)).filter(Boolean),
+        ])
+      );
+      setAssocCounts({ contacts: contacts.length, companies: uniqueCompanyIds.length });
       setAssocContactIds(contacts.map((c: any) => String(c.id)).filter(Boolean));
     } catch (err: any) {
       alert(err?.message ?? 'Error al crear y asociar la empresa');
@@ -276,7 +297,14 @@ export default function DealSelector({ onDealSelected, selectedDeal, disabled = 
         const payload = raw?.data ?? raw;
         const contacts = Array.isArray(payload?.contacts) ? payload.contacts : [];
         const companiesFromDeal = Array.isArray(payload?.companiesFromDeal) ? payload.companiesFromDeal : [];
-        setAssocCounts({ contacts: contacts.length, companies: companiesFromDeal.length });
+        const companiesFromContacts = Array.isArray(payload?.companiesFromContacts) ? payload.companiesFromContacts : [];
+        const uniqueCompanyIds = Array.from(
+          new Set([
+            ...companiesFromDeal.map((c: any) => String(c.id)).filter(Boolean),
+            ...companiesFromContacts.map((c: any) => String(c.id)).filter(Boolean),
+          ])
+        );
+        setAssocCounts({ contacts: contacts.length, companies: uniqueCompanyIds.length });
         setAssocContactIds(contacts.map((c: any) => String(c.id)).filter(Boolean));
         const missing = contacts.find((c: any) => {
           const p = c?.properties || {};
