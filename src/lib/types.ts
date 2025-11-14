@@ -32,9 +32,12 @@ export interface CondicionesData {
   condicionesPago: string;
   condicionesEntrega: string;
   validez: string;
+  aclaracionesTecnicas: string;
   // Campos para los desplegables
   tipoPago?: 'echeq_15' | 'echeq_30' | 'echeq_45' | 'anticipo_50' | 'cta_cte_7' | 'cta_cte_30' | 'cta_cte_60' | 'texto_libre';
   tipoEntrega?: 'produccion_15' | 'stock_48_72';
+  // Nueva variación de cantidad (5% o 10%)
+  variacionCantidad?: '5' | '10';
   // Campo para texto libre de condiciones de pago
   textoLibrePago?: string;
 }
@@ -132,9 +135,11 @@ export const DEFAULT_CONDITIONS: CondicionesData = {
   condicionesPago: "50% anticipo por transferencia bancaria. Una vez acreditado el importe se toma el pedido. Enviar OC.\nEl resto del pago, 48 hs previo a la entrega. Una vez acreditado se coordina entrega.",
   condicionesEntrega: "Demora producción 15 días aprox.\nLa mercadería se entrega palletizada. Debe contar con personal para la descarga.\nEnvíos al interior. Entregamos en el transporte que ustedes trabajen dentro del radio de CABA.",
   validez: "El presente presupuesto tiene una validez de 48 hs desde su emisión, vencido ese plazo se vuelve a cotizar.",
+  aclaracionesTecnicas: "Las medidas cotizadas son medidas externas y dispuestas en largo x ancho x alto\nLa cantidad final de cajas a medida e impresas puede variar, no es exacta; la producción total se define al momento que se termina la producción, puede variar en un 5%\nEn caso de ser impresa, no trabajamos con Pantone, los colores se arman similares, pueden tener diferencias.\nEn caso de descarga manual, deben contar con personal para realizarlo.",
   // Valores por defecto para los nuevos campos
   tipoPago: 'anticipo_50',
-  tipoEntrega: 'produccion_15'
+  tipoEntrega: 'produccion_15',
+  variacionCantidad: '5'
 };
 
 // Opciones para condiciones de pago
@@ -194,6 +199,12 @@ export const CONDICIONES_ENTREGA_OPTIONS = [
     texto: 'Stock disponible, entrega dentro de 48/72 hs desde acreditado el importe.'
   }
 ];
+
+// Opciones para variación de cantidad
+export const VARIACION_CANTIDAD_OPTIONS = [
+  { value: '5', label: '5%' },
+  { value: '10', label: '10%' }
+] as const;
 
 // Condiciones fijas que se agregan automáticamente
 export const CONDICIONES_FIJAS = {

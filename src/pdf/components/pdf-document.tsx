@@ -291,6 +291,13 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
+  // Ítems de aclaraciones técnicas sin espacio extra entre renglones
+  conditionsItem: {
+    fontSize: 10,
+    color: '#374151',
+    lineHeight: 1.3,
+    marginBottom: 0,
+  },
   
   // LEYENDA DE ABREVIACIONES - TEXTO SIMPLE SIN CONTENEDOR
   abbreviationsNote: {
@@ -352,6 +359,14 @@ interface PDFDocumentProps {
 
 export function PDFDocument({ data }: PDFDocumentProps) {
   const currentDate = new Date().toLocaleDateString('es-AR');
+  const aclaracionesLines = (data.condiciones.aclaracionesTecnicas || '')
+    .split('\n')
+    .map(line => {
+      const cleaned = line.replace(/^\s*-\s*/, '').trim();
+      if (!cleaned) return '';
+      return cleaned.endsWith('.') ? cleaned : `${cleaned}.`;
+    })
+    .filter(line => line.length > 0);
   
   return (
     <Document>
@@ -488,6 +503,11 @@ export function PDFDocument({ data }: PDFDocumentProps) {
             
             <Text style={styles.conditionsTitle}>Condiciones de Entrega:</Text>
             <Text style={styles.conditionsText}>{data.condiciones.condicionesEntrega}</Text>
+
+            <Text style={styles.conditionsTitle}>Aclaraciones Técnicas</Text>
+            {aclaracionesLines.map((line, idx) => (
+              <Text key={idx} style={styles.conditionsItem}>{line}</Text>
+            ))}
             
             <Text style={styles.conditionsTitle}>Validez:</Text>
             <Text style={styles.conditionsText}>{data.condiciones.validez}</Text>

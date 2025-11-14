@@ -1,6 +1,6 @@
 "use client";
 
-import { CondicionesData, CONDICIONES_PAGO_OPTIONS, CONDICIONES_ENTREGA_OPTIONS, CONDICIONES_FIJAS } from "@/lib/types";
+import { CondicionesData, CONDICIONES_PAGO_OPTIONS, CONDICIONES_ENTREGA_OPTIONS, CONDICIONES_FIJAS, VARIACION_CANTIDAD_OPTIONS } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,7 +15,18 @@ interface CondicionesFormProps {
 export function CondicionesForm({ data, onChange }: CondicionesFormProps) {
   
   // Función para generar el texto completo de condiciones comerciales
-  const generarTextoCompleto = useCallback((tipoPago: string, tipoEntrega: string, textoLibrePago?: string) => {
+  const generarAclaracionesTecnicas = useCallback((variacion: string | undefined) => {
+    const porcentaje = variacion === '10' ? '10%' : '5%';
+    const lineas = [
+      'Las medidas cotizadas son medidas externas y dispuestas en largo x ancho x alto.',
+      `La cantidad final de cajas a medida e impresas puede variar, no es exacta; la producción total se define al momento que se termina la producción, puede variar en un ${porcentaje}.`,
+      'En caso de ser impresa, no trabajamos con Pantone, los colores se arman similares, pueden tener diferencias.',
+      'En caso de descarga manual, deben contar con personal para realizarlo.'
+    ];
+    return lineas.join('\n');
+  }, []);
+
+  const generarTextoCompleto = useCallback((tipoPago: string, tipoEntrega: string, textoLibrePago?: string, variacionCantidad?: string) => {
     const opcionPago = CONDICIONES_PAGO_OPTIONS.find(opt => opt.value === tipoPago);
     const opcionEntrega = CONDICIONES_ENTREGA_OPTIONS.find(opt => opt.value === tipoEntrega);
     
@@ -32,6 +43,9 @@ export function CondicionesForm({ data, onChange }: CondicionesFormProps) {
       CONDICIONES_FIJAS.enviosInterior
     ].join('\n');
 
+    // Generar aclaraciones técnicas según variación seleccionada
+    const aclaraciones = generarAclaracionesTecnicas(variacionCantidad ?? data.variacionCantidad);
+
     // Actualizar los datos
     onChange({
       ...data,
@@ -40,13 +54,15 @@ export function CondicionesForm({ data, onChange }: CondicionesFormProps) {
       validez: CONDICIONES_FIJAS.validez,
       tipoPago: tipoPago as CondicionesData['tipoPago'],
       tipoEntrega: tipoEntrega as CondicionesData['tipoEntrega'],
+      variacionCantidad: (variacionCantidad ?? data.variacionCantidad) as CondicionesData['variacionCantidad'],
+      aclaracionesTecnicas: aclaraciones,
       textoLibrePago: tipoPago === 'texto_libre' ? (textoLibrePago ?? data.textoLibrePago ?? '') : undefined
     });
-  }, [onChange]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [onChange, generarAclaracionesTecnicas]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handlePagoChange = (tipoPago: string) => {
     if (data.tipoEntrega) {
-      generarTextoCompleto(tipoPago, data.tipoEntrega, data.textoLibrePago);
+      generarTextoCompleto(tipoPago, data.tipoEntrega, data.textoLibrePago, data.variacionCantidad);
     } else {
       onChange({
         ...data,
@@ -58,11 +74,23 @@ export function CondicionesForm({ data, onChange }: CondicionesFormProps) {
 
   const handleEntregaChange = (tipoEntrega: string) => {
     if (data.tipoPago) {
-      generarTextoCompleto(data.tipoPago, tipoEntrega, data.textoLibrePago);
+      generarTextoCompleto(data.tipoPago, tipoEntrega, data.textoLibrePago, data.variacionCantidad);
     } else {
       onChange({
         ...data,
         tipoEntrega: tipoEntrega as CondicionesData['tipoEntrega']
+      });
+    }
+  };
+
+  const handleVariacionChange = (variacion: string) => {
+    if (data.tipoPago && data.tipoEntrega) {
+      generarTextoCompleto(data.tipoPago, data.tipoEntrega, data.textoLibrePago, variacion);
+    } else {
+      onChange({
+        ...data,
+        variacionCantidad: variacion as CondicionesData['variacionCantidad'],
+        aclaracionesTecnicas: generarAclaracionesTecnicas(variacion)
       });
     }
   };
@@ -74,16 +102,16 @@ export function CondicionesForm({ data, onChange }: CondicionesFormProps) {
     };
     onChange(nuevo);
     if (nuevo.tipoPago && nuevo.tipoEntrega) {
-      generarTextoCompleto(nuevo.tipoPago, nuevo.tipoEntrega, texto);
+      generarTextoCompleto(nuevo.tipoPago, nuevo.tipoEntrega, texto, nuevo.variacionCantidad);
     }
   };
 
   // Generar texto automáticamente cuando ambos desplegables tienen valor
   useEffect(() => {
     if (data.tipoPago && data.tipoEntrega) {
-      generarTextoCompleto(data.tipoPago, data.tipoEntrega, data.textoLibrePago);
+      generarTextoCompleto(data.tipoPago, data.tipoEntrega, data.textoLibrePago, data.variacionCantidad);
     }
-  }, [data.tipoPago, data.tipoEntrega, data.textoLibrePago]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [data.tipoPago, data.tipoEntrega, data.textoLibrePago, data.variacionCantidad]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <Card>
@@ -137,6 +165,25 @@ export function CondicionesForm({ data, onChange }: CondicionesFormProps) {
             </SelectTrigger>
             <SelectContent>
               {CONDICIONES_ENTREGA_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Variación Cantidad */}
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-700">
+            Variación Cantidad
+          </label>
+          <Select value={data.variacionCantidad || ""} onValueChange={handleVariacionChange}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Seleccionar variación (5% o 10%)" />
+            </SelectTrigger>
+            <SelectContent>
+              {VARIACION_CANTIDAD_OPTIONS.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
                   {option.label}
                 </SelectItem>

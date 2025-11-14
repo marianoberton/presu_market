@@ -247,3 +247,9 @@
 - No participa del cálculo de m² totales.
 - Subtotal se calcula como `precio × cantidad`.
 - Se puede marcar como "A COTIZAR" como los demás.
+## [2025-11-14] Variación de cantidad en Condiciones
+Contexto: Necesitamos reflejar que la cantidad final de cajas a medida e impresas puede variar (5% o 10%), y controlar ese valor desde el presupuestador para que se vea en el PDF dentro de “Aclaraciones Técnicas”.
+Alternativas consideradas: Texto libre en condiciones / Slider de porcentaje / Dropdown con valores fijos (5% y 10%).
+Decisión: Agregar un nuevo campo en Condiciones llamado “Variación Cantidad” con un dropdown que permita seleccionar 5% o 10%. Por defecto se selecciona 5%. El texto de “Aclaraciones Técnicas” se genera dinámicamente usando el porcentaje elegido.
+Rationale: Mantiene consistencia con Condiciones de Pago/Entrega (control por dropdown), evita ambigüedad de texto libre, y simplifica DX y QA. 5% es el caso más frecuente; 10% se usa ocasionalmente.
+Consecuencias: El PDF refleja el porcentaje elegido; se agrega `variacionCantidad` al tipo `CondicionesData`, opciones `VARIACION_CANTIDAD_OPTIONS`, y la UI de Condiciones incorpora el nuevo control. No se introducen dependencias nuevas.

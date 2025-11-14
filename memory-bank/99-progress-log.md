@@ -146,3 +146,4 @@ La aplicación está lista para uso en producción y puede ser extendida fácilm
 - ✅ UI de Medidas de Producción muestra explícitamente `× 2 planchas`
 - ✅ Precio unitario y m² totales integrados sin cambios adicionales
 - **Links**: `src/lib/types.ts`, `src/lib/calculations.ts`, `src/components/forms/medidas-produccion.tsx`, `memory-bank/03-active-decisions.md`
+[2025-11-14] Condiciones: agregado dropdown “Variación Cantidad” (5% por defecto, opción 10%). PDF y “Aclaraciones Técnicas” actualizados para reflejar el valor seleccionado. Links: N/A
