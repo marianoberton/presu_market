@@ -249,6 +249,13 @@
 - Se puede marcar como "A COTIZAR" como los demás.
 ## [2025-11-14] Variación de cantidad en Condiciones
 
+## [2025-11-14] Contactos HubSpot: propiedades ManyChat y scripts de provisión
+Contexto: Para asegurar integridad en contactos asociados a deals, necesitamos registrar el link de ManyChat y derivar dos IDs.
+Alternativas consideradas: Crear propiedades manualmente en HubSpot / Scripts desde el repo / Creación automática en runtime.
+Decisión: Requerimos solo `mp_live_chat_url` en UI y derivamos `mp_page_id` y `mp_manychat_user_id` en API. Se proveen scripts para crear/verificar propiedades de CONTACTOS: `scripts/create-hubspot-contact-properties.js` y `scripts/check-hubspot-contact-properties.js`.
+Rationale: Simplifica la UX (un único campo) y evita errores manuales. Los scripts aseguran que el esquema de HubSpot esté preparado sin acoplar la app a permisos de modificación de esquema en runtime.
+Consecuencias: Configurar `HUBSPOT_ACCESS_TOKEN`/`HUBSPOT_TOKEN` en `.env.local`. Ejecutar los scripts en entornos nuevos antes de usar la funcionalidad de actualización/creación de contactos.
+
 ## [2025-11-14] Estrategia de asociaciones HubSpot (Contacto y Empresa)
 **Contexto**: La UI mostraba "Empresa asociada" basada en `mp_cliente_empresa` (dirección del formulario) y no en asociaciones reales de HubSpot. Se requieren modales para crear contacto/empresa cuando falten y asociarlos correctamente.
 **Alternativas consideradas**:
@@ -298,3 +305,20 @@ Consecuencias: Aumenta la carga de la petición inicial de deals pero evita otra
 **Consecuencias**:
 - Endpoint `/api/hubspot/associations/create` intenta v4 y cae a v3 si no hay `associationTypeId`.
 - Mapeos soportados: `deals→contacts`, `deals→companies`, `contacts→companies`, `companies→contacts`, `companies→deals`, `contacts→deals`.
+
+### [2025-11-14] HubSpot: Link de ManyChat en Contactos (autocompletar mp_page_id y mp_manychat_user_id)
+**Contexto**: Para integraciones, alcanza con capturar el link de ManyChat del contacto (ejemplo: `https://app.manychat.com/fb104200486030266/chat/459991184`). A partir del link se derivan `mp_page_id` y `mp_manychat_user_id`.
+**Alternativas consideradas**:
+- A) Requerir los tres campos `mp_*` explícitos
+- B) Requerir solo el link y derivar los IDs
+**Decisión**: Requerir únicamente `mp_live_chat_url` y derivar automáticamente `mp_page_id` (número entre `/fb` y la siguiente `/`) y `mp_manychat_user_id` (número final del path `/chat/…`).
+**Rationale**:
+- Simplifica la UX y reduce errores de tipeo
+- Evita inconsistencias entre props `mp_*`
+- Mantiene integridad para integraciones downstream
+**Consecuencias**:
+- API `/api/hubspot/contacts/create`: valida `email`; si se incluye `mp_live_chat_url`, autocompleta `mp_page_id` y `mp_manychat_user_id`.
+- API `/api/hubspot/contacts/update`: si se actualiza `mp_live_chat_url`, autocompleta los IDs faltantes.
+- UI `DealSelector`:
+  - Aviso si falta el “link de ManyChat” y botón para completar
+  - Modal de completar pide solo el link; el Page ID y User ID se calculan automáticamente.

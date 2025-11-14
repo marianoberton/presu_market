@@ -152,3 +152,11 @@ La aplicación está lista para uso en producción y puede ser extendida fácilm
 [2025-11-14] HubSpot: añadidos endpoints `/api/hubspot/contacts/create`, `/api/hubspot/companies/create` y `/api/hubspot/associations/create` para crear y asociar objetos. DealSelector actualizado con conteos reales y modales para crear Contacto/Empresa y asociarlos. Links: N/A
 [2025-11-14] HubSpot: UI de asociaciones simplificada (un único conteo por tipo). Modal de Empresa actualizado para capturar solo nombre, provincia, ciudad y dirección. API `/api/hubspot/companies/create` ajustada para aceptar y enviar únicamente esos campos. Links: N/A
 [2025-11-14] HubSpot: Fallback v4→v3 en asociaciones. En `/api/hubspot/associations/create`, si no hay labels `HUBSPOT_DEFINED` para el par (ej. deals→companies), se usa el endpoint v3 con `associationType` por defecto. Links: N/A
+[2025-11-14] contactos/ManyChat: Se simplificó la UX para contactos, requiriendo solo el link de ManyChat.
+- API: `/api/hubspot/contacts/create` y `/api/hubspot/contacts/update` derivan automáticamente `mp_page_id` y `mp_manychat_user_id` desde `mp_live_chat_url`.
+- UI: `DealSelector` muestra aviso “falta link de ManyChat” y el modal pide solo el link; se autocompletan Page ID y User ID.
+[2025-11-14] HubSpot contactos: scripts para propiedades y mejoras de error
+- ✅ Añadidos scripts `scripts/check-hubspot-contact-properties.js` y `scripts/create-hubspot-contact-properties.js` para verificar/crear `mp_live_chat_url`, `mp_manychat_user_id`, `mp_page_id` en CONTACTOS.
+- ✅ `02-tech-context.md` documenta cómo ejecutarlos y las env vars necesarias.
+- ✅ UI mejora el mensaje al actualizar contacto mostrando detalles del error devueltos por HubSpot.
+- ✅ Parsing del link de ManyChat robustecido (trim + búsqueda independiente de ambos IDs).

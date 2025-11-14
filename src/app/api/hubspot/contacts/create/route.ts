@@ -1,12 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAccessToken } from "@/lib/hubspot-integration";
 
-type CreateContactBody = {
+type CreateContactProps = {
   firstname?: string;
   lastname?: string;
   email?: string;
   phone?: string;
+  mp_live_chat_url?: string;
+  mp_manychat_user_id?: string;
+  mp_page_id?: string;
 };
+
+type CreateContactBody = CreateContactProps | { properties: CreateContactProps };
 
 export async function POST(req: NextRequest) {
   try {
@@ -19,13 +24,27 @@ export async function POST(req: NextRequest) {
     }
 
     const body: CreateContactBody = await req.json();
+    const props: CreateContactProps = (body && (body as any).properties) ? (body as any).properties : (body as any);
+
+    // Validación: email requerido (HubSpot) y link de ManyChat opcional
+    if (!props?.email) {
+      return NextResponse.json(
+        { error: "Missing required field: email" },
+        { status: 400 }
+      );
+    }
+    // Si viene el link de ManyChat, derivar page_id y user_id
+    const derived = deriveManyChat(props?.mp_live_chat_url);
 
     const payload = {
       properties: {
-        ...(body.firstname ? { firstname: body.firstname } : {}),
-        ...(body.lastname ? { lastname: body.lastname } : {}),
-        ...(body.email ? { email: body.email } : {}),
-        ...(body.phone ? { phone: body.phone } : {}),
+        ...(props.firstname ? { firstname: props.firstname } : {}),
+        ...(props.lastname ? { lastname: props.lastname } : {}),
+        ...(props.email ? { email: props.email } : {}),
+        ...(props.phone ? { phone: props.phone } : {}),
+        ...(props.mp_live_chat_url ? { mp_live_chat_url: String(props.mp_live_chat_url) } : {}),
+        ...(props.mp_manychat_user_id || derived?.manychat_user_id ? { mp_manychat_user_id: String(props.mp_manychat_user_id ?? derived!.manychat_user_id) } : {}),
+        ...(props.mp_page_id || derived?.page_id ? { mp_page_id: String(props.mp_page_id ?? derived!.page_id) } : {}),
       },
     };
 
@@ -61,5 +80,20 @@ function safeJson(text: string) {
     return JSON.parse(text);
   } catch {
     return text;
+  }
+}
+
+function deriveManyChat(url?: string): { page_id: string; manychat_user_id: string } | null {
+  if (!url) return null;
+  try {
+    const normalized = String(url).trim();
+    const pageMatch = normalized.match(/\/fb(\d+)/);
+    const userMatch = normalized.match(/\/chat\/(\d+)/);
+    const page_id = pageMatch?.[1];
+    const manychat_user_id = userMatch?.[1];
+    if (page_id && manychat_user_id) return { page_id, manychat_user_id };
+    return null;
+  } catch {
+    return null;
   }
 }

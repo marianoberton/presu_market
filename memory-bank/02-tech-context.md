@@ -87,6 +87,22 @@ npm audit
 npm update
 ```
 
+### HubSpot – Utilitarios (Contactos)
+```bash
+# Verificar propiedades mp_* de CONTACTOS (ManyChat)
+node scripts/check-hubspot-contact-properties.js
+
+# Crear propiedades mp_* de CONTACTOS si faltan
+node scripts/create-hubspot-contact-properties.js
+```
+
+Requiere configurar en `.env.local` una de:
+```bash
+HUBSPOT_ACCESS_TOKEN="<token OAuth/API>"
+# o
+HUBSPOT_TOKEN="<token>"
+```
+
 ## Configuración de Entorno
 
 ### Variables de Entorno (.env.local)

@@ -18,13 +18,19 @@ export default function DealSelector({ onDealSelected, selectedDeal, disabled = 
   const [assocError, setAssocError] = useState<string | null>(null);
   const [assocCounts, setAssocCounts] = useState<{ contacts: number; companies: number } | null>(null);
   const [assocContactIds, setAssocContactIds] = useState<string[]>([]);
+  const [contactMissingMp, setContactMissingMp] = useState<{ id: string; props: any } | null>(null);
   // Eliminamos conteo redundante de IDs asociados para simplificar la UI
 
   const [showContactModal, setShowContactModal] = useState(false);
   const [showCompanyModal, setShowCompanyModal] = useState(false);
-  const [contactForm, setContactForm] = useState({ firstname: '', lastname: '', email: '', phone: '' });
+  const [contactForm, setContactForm] = useState({ firstname: '', lastname: '', email: '', phone: '', mp_live_chat_url: '' });
   const [companyForm, setCompanyForm] = useState({ name: '', province: '', city: '', address: '' });
   const [creating, setCreating] = useState(false);
+  // Modal para asegurar mp_* en contacto existente antes de asociar empresa
+  const [ensurePropsModal, setEnsurePropsModal] = useState(false);
+  const [ensureContactId, setEnsureContactId] = useState<string | null>(null);
+  const [pendingCompanyId, setPendingCompanyId] = useState<string | null>(null);
+  const [ensureForm, setEnsureForm] = useState({ mp_live_chat_url: '' });
 
   useEffect(() => {
     loadDeals();
@@ -96,10 +102,21 @@ export default function DealSelector({ onDealSelected, selectedDeal, disabled = 
           companies: companiesFromDeal.length,
         });
         setAssocContactIds(contacts.map((c: any) => String(c.id)).filter(Boolean));
+        // Detectar contacto con mp_* faltantes
+        const missing = contacts.find((c: any) => {
+          const p = c?.properties || {};
+          return !p?.mp_live_chat_url;
+        });
+        if (missing?.id) {
+          setContactMissingMp({ id: String(missing.id), props: missing.properties || {} });
+        } else {
+          setContactMissingMp(null);
+        }
       } catch (err: any) {
         setAssocError(err?.message ?? 'Error desconocido al cargar asociaciones');
         setAssocCounts(null);
         setAssocContactIds([]);
+        setContactMissingMp(null);
       } finally {
         setAssocLoading(false);
       }
@@ -129,7 +146,7 @@ export default function DealSelector({ onDealSelected, selectedDeal, disabled = 
       if (!assocRes.ok) throw new Error(assocData?.error || 'No se pudo asociar el contacto al deal');
 
       setShowContactModal(false);
-      setContactForm({ firstname: '', lastname: '', email: '', phone: '' });
+          setContactForm({ firstname: '', lastname: '', email: '', phone: '', mp_live_chat_url: '' });
       // Reload associations
       const url = `/api/hubspot/test-associations?dealId=${selectedDeal.id}&fallback=true`;
       const res = await fetch(url);
@@ -170,15 +187,30 @@ export default function DealSelector({ onDealSelected, selectedDeal, disabled = 
       // Si existe un contacto asociado, asociar empresa al contacto como primaria
       const contactId = assocContactIds[0];
       if (contactId) {
-        const assocContactRes = await fetch('/api/hubspot/associations/create', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ fromType: 'contacts', fromId: String(contactId), toType: 'companies', toId: String(created.id) }),
-        });
-        // No abortar si falla esta asociación; sólo informar
-        if (!assocContactRes.ok) {
-          const msg = (await assocContactRes.json())?.error || 'Fallo al asociar empresa al contacto';
-          console.warn(msg);
+        // Leer propiedades del contacto y forzar actualización de mp_* si faltan
+        const readUrl = `/api/hubspot/contacts/read?id=${encodeURIComponent(String(contactId))}`;
+        const readRes = await fetch(readUrl);
+        const readData = await readRes.json();
+        if (!readRes.ok) throw new Error(readData?.error || 'No se pudo leer el contacto');
+        const props = readData?.properties || {};
+        const missingLink = !props?.mp_live_chat_url;
+        if (missingLink) {
+          // Abrir modal obligatorio para completar mp_* antes de asociar empresa al contacto
+          setEnsureContactId(String(contactId));
+          setPendingCompanyId(String(created.id));
+          setEnsureForm({ mp_live_chat_url: props?.mp_live_chat_url || '' });
+          setEnsurePropsModal(true);
+        } else {
+          const assocContactRes = await fetch('/api/hubspot/associations/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ fromType: 'contacts', fromId: String(contactId), toType: 'companies', toId: String(created.id) }),
+          });
+          // No abortar si falla esta asociación; sólo informar
+          if (!assocContactRes.ok) {
+            const msg = (await assocContactRes.json())?.error || 'Fallo al asociar empresa al contacto';
+            console.warn(msg);
+          }
         }
       }
 
@@ -195,6 +227,69 @@ export default function DealSelector({ onDealSelected, selectedDeal, disabled = 
       setAssocContactIds(contacts.map((c: any) => String(c.id)).filter(Boolean));
     } catch (err: any) {
       alert(err?.message ?? 'Error al crear y asociar la empresa');
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const updateContactPropsAndAssociate = async () => {
+    if (!ensureContactId) return;
+    if (!ensureForm.mp_live_chat_url) {
+      alert('Pegá el link de ManyChat (mp_live_chat_url)');
+      return;
+    }
+    setCreating(true);
+    try {
+      const patchRes = await fetch('/api/hubspot/contacts/update', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: ensureContactId, properties: ensureForm }),
+      });
+      const patchData = await patchRes.json();
+      if (!patchRes.ok) {
+        const details = typeof patchData?.details === 'string' ? patchData.details : JSON.stringify(patchData?.details, null, 2);
+        alert(`${patchData?.error || 'No se pudo actualizar el contacto'}\n\n${details || ''}`);
+        return;
+      }
+
+      // Si hay una empresa pendiente, asociar ahora; si no, solo cerrar y refrescar
+      if (pendingCompanyId) {
+        const assocRes = await fetch('/api/hubspot/associations/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fromType: 'contacts', fromId: String(ensureContactId), toType: 'companies', toId: String(pendingCompanyId) }),
+        });
+        const assocData = await assocRes.json();
+        if (!assocRes.ok) throw new Error(assocData?.error || 'No se pudo asociar la empresa al contacto');
+      }
+
+      setEnsurePropsModal(false);
+      setEnsureContactId(null);
+      setPendingCompanyId(null);
+      setEnsureForm({ mp_live_chat_url: '' });
+
+      // Reload associations
+      if (selectedDeal?.id) {
+        const url = `/api/hubspot/test-associations?dealId=${selectedDeal.id}&fallback=true`;
+        const res = await fetch(url);
+        const raw = await res.json();
+        const payload = raw?.data ?? raw;
+        const contacts = Array.isArray(payload?.contacts) ? payload.contacts : [];
+        const companiesFromDeal = Array.isArray(payload?.companiesFromDeal) ? payload.companiesFromDeal : [];
+        setAssocCounts({ contacts: contacts.length, companies: companiesFromDeal.length });
+        setAssocContactIds(contacts.map((c: any) => String(c.id)).filter(Boolean));
+        const missing = contacts.find((c: any) => {
+          const p = c?.properties || {};
+          return !p?.mp_live_chat_url;
+        });
+        if (missing?.id) {
+          setContactMissingMp({ id: String(missing.id), props: missing.properties || {} });
+        } else {
+          setContactMissingMp(null);
+        }
+      }
+    } catch (err: any) {
+      alert(err?.message ?? 'Error al actualizar el contacto y asociar la empresa');
     } finally {
       setCreating(false);
     }
@@ -283,6 +378,25 @@ export default function DealSelector({ onDealSelected, selectedDeal, disabled = 
             <p className="text-xs text-gray-500">Sin datos de asociaciones</p>
           )}
 
+          {contactMissingMp && (
+            <div className="mt-2 p-2 border border-amber-300 bg-amber-50 rounded">
+              <p className="text-xs text-amber-800">El contacto asociado no tiene link de ManyChat. Pegá el link para completar.</p>
+              <div className="mt-2 flex gap-2">
+                <button
+                  type="button"
+                  className="px-2 py-1 text-xs rounded bg-amber-600 text-white"
+                  onClick={() => {
+                    setEnsureContactId(contactMissingMp.id);
+                    setPendingCompanyId(null);
+                    const p = contactMissingMp.props || {};
+                    setEnsureForm({ mp_live_chat_url: p?.mp_live_chat_url || '' });
+                    setEnsurePropsModal(true);
+                  }}
+                >Completar link de ManyChat</button>
+              </div>
+            </div>
+          )}
+
           <div className="flex items-center gap-2">
             {assocCounts && assocCounts.contacts === 0 && (
               <button
@@ -315,10 +429,11 @@ export default function DealSelector({ onDealSelected, selectedDeal, disabled = 
               <input className="border px-2 py-1 rounded" placeholder="Apellido" value={contactForm.lastname} onChange={e => setContactForm({ ...contactForm, lastname: e.target.value })} />
               <input className="border px-2 py-1 rounded col-span-2" placeholder="Email" value={contactForm.email} onChange={e => setContactForm({ ...contactForm, email: e.target.value })} />
               <input className="border px-2 py-1 rounded col-span-2" placeholder="Teléfono" value={contactForm.phone} onChange={e => setContactForm({ ...contactForm, phone: e.target.value })} />
+              <input className="border px-2 py-1 rounded col-span-2" placeholder="Link de ManyChat (mp_live_chat_url)" value={contactForm.mp_live_chat_url} onChange={e => setContactForm({ ...contactForm, mp_live_chat_url: e.target.value })} />
             </div>
             <div className="flex justify-end gap-2">
               <button className="px-3 py-1 text-xs rounded border" onClick={() => setShowContactModal(false)} disabled={creating}>Cancelar</button>
-              <button className="px-3 py-1 text-xs rounded bg-blue-600 text-white" onClick={createContactAndAssociate} disabled={creating}>Crear y asociar</button>
+              <button className="px-3 py-1 text-xs rounded bg-blue-600 text-white" onClick={createContactAndAssociate} disabled={creating || !contactForm.email || !contactForm.mp_live_chat_url}>Crear y asociar</button>
             </div>
           </div>
         </div>
@@ -338,6 +453,21 @@ export default function DealSelector({ onDealSelected, selectedDeal, disabled = 
             <div className="flex justify-end gap-2">
               <button className="px-3 py-1 text-xs rounded border" onClick={() => setShowCompanyModal(false)} disabled={creating}>Cancelar</button>
               <button className="px-3 py-1 text-xs rounded bg-green-600 text-white" onClick={createCompanyAndAssociate} disabled={creating || !companyForm.name}>Crear y asociar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {ensurePropsModal && (
+        <div className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center">
+          <div className="bg-white rounded-md shadow-lg p-4 w-full max-w-md">
+            <h3 className="text-sm font-medium mb-3">Completar link de ManyChat</h3>
+            <p className="text-xs text-gray-600 mb-2">Pegá el link de ManyChat; se completan automáticamente el Page ID y el User ID.</p>
+            <div className="grid grid-cols-1 gap-2 mb-3">
+              <input className="border px-2 py-1 rounded" placeholder="https://app.manychat.com/fbXXXXXXXXXXXXXXX/chat/XXXXXX" value={ensureForm.mp_live_chat_url} onChange={e => setEnsureForm({ ...ensureForm, mp_live_chat_url: e.target.value })} />
+            </div>
+            <div className="flex justify-end gap-2">
+              <button className="px-3 py-1 text-xs rounded bg-blue-600 text-white" onClick={updateContactPropsAndAssociate} disabled={creating || !ensureForm.mp_live_chat_url}>Actualizar y asociar</button>
             </div>
           </div>
         </div>
