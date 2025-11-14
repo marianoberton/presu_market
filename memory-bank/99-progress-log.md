@@ -147,3 +147,8 @@ La aplicación está lista para uso en producción y puede ser extendida fácilm
 - ✅ Precio unitario y m² totales integrados sin cambios adicionales
 - **Links**: `src/lib/types.ts`, `src/lib/calculations.ts`, `src/components/forms/medidas-produccion.tsx`, `memory-bank/03-active-decisions.md`
 [2025-11-14] Condiciones: agregado dropdown “Variación Cantidad” (5% por defecto, opción 10%). PDF y “Aclaraciones Técnicas” actualizados para reflejar el valor seleccionado. Links: N/A
+[2025-11-14] HubSpot: verificación de empresa asociada al seleccionar deal; enriquecemos `/api/hubspot/deals` con asociaciones y mostramos estado en UI. Links: N/A
+[2025-11-14] Debug: agregada ruta `/api/hubspot/test-associations` para inspección de contactos y empresas asociadas de un deal; ignorada en `.gitignore`. Links: N/A
+[2025-11-14] HubSpot: añadidos endpoints `/api/hubspot/contacts/create`, `/api/hubspot/companies/create` y `/api/hubspot/associations/create` para crear y asociar objetos. DealSelector actualizado con conteos reales y modales para crear Contacto/Empresa y asociarlos. Links: N/A
+[2025-11-14] HubSpot: UI de asociaciones simplificada (un único conteo por tipo). Modal de Empresa actualizado para capturar solo nombre, provincia, ciudad y dirección. API `/api/hubspot/companies/create` ajustada para aceptar y enviar únicamente esos campos. Links: N/A
+[2025-11-14] HubSpot: Fallback v4→v3 en asociaciones. En `/api/hubspot/associations/create`, si no hay labels `HUBSPOT_DEFINED` para el par (ej. deals→companies), se usa el endpoint v3 con `associationType` por defecto. Links: N/A

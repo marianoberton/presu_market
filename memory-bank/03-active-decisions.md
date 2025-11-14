@@ -248,8 +248,53 @@
 - Subtotal se calcula como `precio × cantidad`.
 - Se puede marcar como "A COTIZAR" como los demás.
 ## [2025-11-14] Variación de cantidad en Condiciones
+
+## [2025-11-14] Estrategia de asociaciones HubSpot (Contacto y Empresa)
+**Contexto**: La UI mostraba "Empresa asociada" basada en `mp_cliente_empresa` (dirección del formulario) y no en asociaciones reales de HubSpot. Se requieren modales para crear contacto/empresa cuando falten y asociarlos correctamente.
+**Alternativas consideradas**:
+- A) Asociar empresa solo al deal
+- B) Asociar empresa solo al contacto (primaria)
+- C) Asociar empresa a ambos: contacto (primaria) y deal
+**Decisión**: Asociar empresa a ambos: contacto (como primaria) y al deal. Al crear contacto, asociarlo al deal. Al crear empresa, asociarla al deal y, si existe contacto asociado, también al contacto como primaria.
+**Rationale**:
+- Refleja la relación natural Contacto ↔ Empresa en CRM y soporta reporting por empresa
+- Evita inconsistencias: el deal queda vinculado a la empresa para KPIs y pipelines
+- Minimiza ambigüedad en UI y datos (`mp_cliente_empresa` deja de confundirse con asociaciones reales)
+**Consecuencias**:
+- Nuevos endpoints: `/api/hubspot/contacts/create`, `/api/hubspot/companies/create`, `/api/hubspot/associations/create`
+- UI: `DealSelector` muestra conteos reales (Contactos/Empresas) y ofrece modales para crear/ asociar
+- Observación: si no se puede resolver el ID del contacto, la empresa se asocia solo al deal (fallback)
 Contexto: Necesitamos reflejar que la cantidad final de cajas a medida e impresas puede variar (5% o 10%), y controlar ese valor desde el presupuestador para que se vea en el PDF dentro de “Aclaraciones Técnicas”.
 Alternativas consideradas: Texto libre en condiciones / Slider de porcentaje / Dropdown con valores fijos (5% y 10%).
 Decisión: Agregar un nuevo campo en Condiciones llamado “Variación Cantidad” con un dropdown que permita seleccionar 5% o 10%. Por defecto se selecciona 5%. El texto de “Aclaraciones Técnicas” se genera dinámicamente usando el porcentaje elegido.
 Rationale: Mantiene consistencia con Condiciones de Pago/Entrega (control por dropdown), evita ambigüedad de texto libre, y simplifica DX y QA. 5% es el caso más frecuente; 10% se usa ocasionalmente.
 Consecuencias: El PDF refleja el porcentaje elegido; se agrega `variacionCantidad` al tipo `CondicionesData`, opciones `VARIACION_CANTIDAD_OPTIONS`, y la UI de Condiciones incorpora el nuevo control. No se introducen dependencias nuevas.
+## [2025-11-14] Verificación de empresa asociada en selección de Deal
+Contexto: Al seleccionar un deal en el presupuestador, necesitamos saber si existe una empresa asociada (desde el deal o desde el contacto vinculado) para completar y mostrar la empresa en la UI.
+Alternativas consideradas: Consultar solo contactos / Consultar solo empresas / Consultar ambas asociaciones y completar `mp_cliente_empresa`.
+Decisión: Enriquecer la carga de deals (`/api/hubspot/deals`) consultando asociaciones de contactos y empresas (API CRM v4), y completar `mp_cliente_empresa` con el nombre de la empresa asociada si está disponible. En el selector se muestra “Empresa asociada: <nombre>” o “Sin empresa asociada”.
+Rationale: Reduce ambigüedad y pasos manuales, mantiene consistencia con autocompletado de datos del contacto, mejora DX al evitar llamados extra al seleccionar.
+Consecuencias: Aumenta la carga de la petición inicial de deals pero evita otra llamada por selección. No se agregan dependencias nuevas.
+### [2025-11-14] HubSpot: propiedades al crear Empresa
+**Contexto**: Simplificar los datos enviados al crear una empresa y alinear la UI con información útil para el equipo.
+**Alternativas consideradas**: 
+- A) Payload estándar HubSpot (name, domain, website, phone)
+- B) Payload reducido con propiedades relevantes para la operación
+**Decisión**: Usar únicamente las propiedades: `name`, `province`, `city`, `address` al crear una empresa.
+**Rationale**: Menos ruido, foco en datos operativos, coherencia con el flujo del presupuestador.
+**Consecuencias**: 
+- API `/api/hubspot/companies/create` acepta cuerpo `{ properties: { name, province?, city?, address? } }` o plano.
+- DealSelector muestra modal con esos campos exclusivos.
+- Si `province` no existe en HubSpot, usar `state` o crear la propiedad personalizada.
+- UI simplificada de asociaciones: se muestra un único conteo por tipo (sin "visibles / asociados").
+
+### [2025-11-14] HubSpot: Fallback de asociaciones (v4 → v3)
+**Contexto**: En algunos portales, el endpoint de labels para asociaciones (`crm/v4/associations/{from}/{to}/labels`) no devuelve tipos `HUBSPOT_DEFINED` para ciertos pares (ej. `deals→companies`), impidiendo crear asociaciones vía v4.
+**Alternativas consideradas**:
+- A) Requerir siempre labels v4 y abortar si faltan
+- B) Fallback a v3 con tipos por defecto (`deal_to_company`, `contact_to_company`, etc.)
+**Decisión**: Usar v4 cuando haya `HUBSPOT_DEFINED` disponible; si no, hacer fallback a v3 con el `associationType` por defecto según el par.
+**Rationale**: Asegura que la asociación se complete en escenarios reales, independientemente de configuraciones del portal.
+**Consecuencias**:
+- Endpoint `/api/hubspot/associations/create` intenta v4 y cae a v3 si no hay `associationTypeId`.
+- Mapeos soportados: `deals→contacts`, `deals→companies`, `contacts→companies`, `companies→contacts`, `companies→deals`, `contacts→deals`.

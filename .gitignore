@@ -42,6 +42,9 @@ next-env.d.ts
 
 # HubSpot config file
 hubspot.config.yml
+ 
+# dev-only test routes (ignored)
+src/app/api/hubspot/test-associations/
 
 # Dev preview
 /dev-preview

@@ -98,6 +98,9 @@ export async function GET() {
     if (filteredDeals.length > 0) {
       // Obtener todas las associations de una vez usando la API v4
       const dealIds = filteredDeals.map(deal => ({ id: deal.id }));
+      // Variables compartidas para usar fallback contacto→empresa más adelante
+      const dealToContactsMap = new Map<string, string[]>();
+      let allContactIds: string[] = [];
       
       try {
         const associationsResponse = await fetch('https://api.hubapi.com/crm/v4/associations/deals/contacts/batch/read', {
@@ -116,7 +119,6 @@ export async function GET() {
           console.log('Associations obtenidas:', JSON.stringify(associationsData, null, 2));
 
           // Crear un mapa de deal ID a contact IDs
-          const dealToContactsMap = new Map();
           if (associationsData.results) {
             for (const result of associationsData.results) {
               if (result.to && result.to.length > 0) {
@@ -126,7 +128,7 @@ export async function GET() {
           }
 
           // Obtener datos de todos los contactos únicos
-          const allContactIds = Array.from(new Set(
+          allContactIds = Array.from(new Set(
             Array.from(dealToContactsMap.values()).flat()
           ));
 
@@ -193,6 +195,163 @@ export async function GET() {
       } catch (associationsError) {
         console.warn('Error al obtener associations:', associationsError);
         // Continuar sin fallar si hay error con associations
+      }
+
+      // Asociaciones de empresas (deals -> companies)
+      try {
+        const associationsCompaniesResponse = await fetch('https://api.hubapi.com/crm/v4/associations/deals/companies/batch/read', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ inputs: dealIds })
+        });
+
+        if (associationsCompaniesResponse.ok) {
+          const associationsCompaniesData = await associationsCompaniesResponse.json();
+          console.log('Associations de empresas obtenidas:', JSON.stringify(associationsCompaniesData, null, 2));
+
+          const dealToCompaniesMap = new Map<string, string[]>();
+          if (associationsCompaniesData.results) {
+            for (const result of associationsCompaniesData.results) {
+              if (result.to && result.to.length > 0) {
+                dealToCompaniesMap.set(result.from.id, result.to.map((company: { id: string }) => company.id));
+              }
+            }
+          }
+
+          const allCompanyIds = Array.from(new Set(
+            Array.from(dealToCompaniesMap.values()).flat()
+          ));
+
+          if (allCompanyIds.length > 0) {
+            const companiesResponse = await fetch('https://api.hubapi.com/crm/v3/objects/companies/batch/read', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                inputs: allCompanyIds.map(id => ({ id })),
+                properties: ['name', 'domain', 'website', 'phone']
+              })
+            });
+
+            if (companiesResponse.ok) {
+              const companiesData = await companiesResponse.json();
+              const companiesMap = new Map<string, any>();
+              if (companiesData.results) {
+                for (const company of companiesData.results) {
+                  companiesMap.set(company.id, company.properties);
+                }
+              }
+
+              // Auto-completar empresa del cliente si no está definida
+              for (const deal of filteredDeals) {
+                const companyIds = dealToCompaniesMap.get(deal.id);
+                if (companyIds && companyIds.length > 0) {
+                  const companyProps = companiesMap.get(companyIds[0]);
+                  if (companyProps && companyProps.name) {
+                    if (!deal.properties.mp_cliente_empresa) {
+                      deal.properties.mp_cliente_empresa = companyProps.name;
+                      console.log(`Deal ${deal.id}: Empresa asociada detectada -> ${companyProps.name}`);
+                    } else {
+                      console.log(`Deal ${deal.id}: Empresa ya definida -> ${deal.properties.mp_cliente_empresa}`);
+                    }
+                  }
+                } else {
+                  console.log(`Deal ${deal.id}: sin empresas asociadas`);
+                }
+              }
+            } else {
+              console.error('Error al obtener datos de empresas:', companiesResponse.status, await companiesResponse.text());
+            }
+          }
+        } else {
+          console.error('Error al obtener associations de empresas:', associationsCompaniesResponse.status, await associationsCompaniesResponse.text());
+        }
+      } catch (associationsCompaniesError) {
+        console.warn('Error al obtener associations de empresas:', associationsCompaniesError);
+      }
+
+      // Fallback: intentar obtener empresa desde asociaciones del contacto (contacts -> companies) si el deal no tiene empresa
+      try {
+        if (allContactIds.length > 0) {
+          const contactCompaniesAssocResp = await fetch('https://api.hubapi.com/crm/v4/associations/contacts/companies/batch/read', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ inputs: allContactIds.map(id => ({ id })) })
+          });
+
+          if (contactCompaniesAssocResp.ok) {
+            const contactCompaniesAssocData = await contactCompaniesAssocResp.json();
+            const contactToCompaniesMap = new Map<string, string[]>();
+
+            if (contactCompaniesAssocData.results) {
+              for (const result of contactCompaniesAssocData.results) {
+                if (result.to && result.to.length > 0) {
+                  contactToCompaniesMap.set(result.from.id, result.to.map((company: { id: string }) => company.id));
+                }
+              }
+            }
+
+            const allCompanyIdsFromContacts = Array.from(new Set(
+              Array.from(contactToCompaniesMap.values()).flat()
+            ));
+
+            if (allCompanyIdsFromContacts.length > 0) {
+              const companiesFromContactsResp = await fetch('https://api.hubapi.com/crm/v3/objects/companies/batch/read', {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  inputs: allCompanyIdsFromContacts.map(id => ({ id })),
+                  properties: ['name', 'domain', 'website', 'phone']
+                })
+              });
+
+              if (companiesFromContactsResp.ok) {
+                const companiesFromContactsData = await companiesFromContactsResp.json();
+                const companiesFromContactsMap = new Map<string, any>();
+                if (companiesFromContactsData.results) {
+                  for (const company of companiesFromContactsData.results) {
+                    companiesFromContactsMap.set(company.id, company.properties);
+                  }
+                }
+
+                // Completar empresa del cliente si sigue sin estar definida, usando empresa asociada al contacto
+                for (const deal of filteredDeals) {
+                  if (!deal.properties.mp_cliente_empresa) {
+                    const contactIds = dealToContactsMap.get(deal.id) || [];
+                    const firstContactId = contactIds[0];
+                    const companyIdsForContact = firstContactId ? contactToCompaniesMap.get(firstContactId) : undefined;
+                    if (companyIdsForContact && companyIdsForContact.length > 0) {
+                      const companyProps = companiesFromContactsMap.get(companyIdsForContact[0]);
+                      if (companyProps && companyProps.name) {
+                        deal.properties.mp_cliente_empresa = companyProps.name;
+                        console.log(`Deal ${deal.id}: Fallback empresa desde contacto -> ${companyProps.name}`);
+                      }
+                    } else {
+                      console.log(`Deal ${deal.id}: sin empresas asociadas via contacto`);
+                    }
+                  }
+                }
+              } else {
+                console.error('Error al obtener empresas desde contactos:', companiesFromContactsResp.status, await companiesFromContactsResp.text());
+              }
+            }
+          } else {
+            console.error('Error al obtener associations contacts->companies:', contactCompaniesAssocResp.status, await contactCompaniesAssocResp.text());
+          }
+        }
+      } catch (contactCompaniesError) {
+        console.warn('Error en fallback contacto→empresa:', contactCompaniesError);
       }
     }
 
