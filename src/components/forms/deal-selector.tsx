@@ -19,6 +19,7 @@ export default function DealSelector({ onDealSelected, selectedDeal, disabled = 
   const [assocCounts, setAssocCounts] = useState<{ contacts: number; companies: number } | null>(null);
   const [assocContactIds, setAssocContactIds] = useState<string[]>([]);
   const [contactMissingMp, setContactMissingMp] = useState<{ id: string; props: any } | null>(null);
+  const [ignoredManyChatContacts, setIgnoredManyChatContacts] = useState<Record<string, boolean>>({});
   // Eliminamos conteo redundante de IDs asociados para simplificar la UI
 
   const [showContactModal, setShowContactModal] = useState(false);
@@ -106,13 +107,19 @@ export default function DealSelector({ onDealSelected, selectedDeal, disabled = 
             ...companiesFromContacts.map((id: any) => String(id)).filter(Boolean),
           ]));
           setAssocCounts({
-            contacts: contacts.length,
-            companies: uniqueCompanyIds.length,
+            contacts: typeof meta.contactsCount === 'number' ? meta.contactsCount : contacts.length,
+            companies: typeof meta.companiesUniqueCount === 'number' ? meta.companiesUniqueCount : uniqueCompanyIds.length,
           });
           setAssocContactIds(contacts.map((id: any) => String(id)).filter(Boolean));
           const missing = meta.missingManyChatContact || null;
           if (missing?.id) {
-            setContactMissingMp({ id: String(missing.id), props: missing.properties || {} });
+            const missingId = String(missing.id);
+            const isIgnored = !!ignoredManyChatContacts[missingId];
+            if (isIgnored) {
+              setContactMissingMp(null);
+            } else {
+              setContactMissingMp({ id: missingId, props: missing.properties || {} });
+            }
           } else {
             setContactMissingMp(null);
           }
@@ -138,7 +145,7 @@ export default function DealSelector({ onDealSelected, selectedDeal, disabled = 
     };
 
     loadAssociations();
-  }, [selectedDeal?.id]);
+  }, [selectedDeal?.id, ignoredManyChatContacts]);
 
   const createContactAndAssociate = async () => {
     if (!selectedDeal?.id) return;
@@ -190,6 +197,20 @@ export default function DealSelector({ onDealSelected, selectedDeal, disabled = 
       const created = await createRes.json();
       if (!createRes.ok) throw new Error(created?.error || 'No se pudo crear la empresa');
 
+      // Renombrar el deal al nombre de la empresa recién creada
+      const newDealName = String(created?.properties?.name || companyForm.name || '').trim();
+      if (newDealName) {
+        const updRes = await fetch('/api/hubspot/deals/update', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: selectedDeal.id, properties: { dealname: newDealName } }),
+        });
+        const updJson = await updRes.json();
+        if (!updRes.ok) {
+          console.warn('No se pudo actualizar el nombre del deal:', updJson?.error || updJson);
+        }
+      }
+
       // Asociar empresa al deal
       const assocDealRes = await fetch('/api/hubspot/associations/create', {
         method: 'POST',
@@ -210,11 +231,24 @@ export default function DealSelector({ onDealSelected, selectedDeal, disabled = 
         const props = readData?.properties || {};
         const missingLink = !props?.mp_live_chat_url;
         if (missingLink) {
-          // Abrir modal obligatorio para completar mp_* antes de asociar empresa al contacto
-          setEnsureContactId(String(contactId));
-          setPendingCompanyId(String(created.id));
-          setEnsureForm({ mp_live_chat_url: props?.mp_live_chat_url || '' });
-          setEnsurePropsModal(true);
+          // Si el usuario indicó bypass para este contacto, asociar directamente y continuar
+          if (ignoredManyChatContacts[String(contactId)]) {
+            const assocContactRes = await fetch('/api/hubspot/associations/create', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ fromType: 'contacts', fromId: String(contactId), toType: 'companies', toId: String(created.id) }),
+            });
+            if (!assocContactRes.ok) {
+              const msg = (await assocContactRes.json())?.error || 'Fallo al asociar empresa al contacto';
+              console.warn(msg);
+            }
+          } else {
+            // Abrir modal obligatorio para completar mp_* antes de asociar empresa al contacto
+            setEnsureContactId(String(contactId));
+            setPendingCompanyId(String(created.id));
+            setEnsureForm({ mp_live_chat_url: props?.mp_live_chat_url || '' });
+            setEnsurePropsModal(true);
+          }
         } else {
           const assocContactRes = await fetch('/api/hubspot/associations/create', {
             method: 'POST',
@@ -297,6 +331,52 @@ export default function DealSelector({ onDealSelected, selectedDeal, disabled = 
       }
     } catch (err: any) {
       alert(err?.message ?? 'Error al actualizar el contacto y asociar la empresa');
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const bypassManyChatAndAssociate = async () => {
+    // Permite avanzar sin completar mp_live_chat_url
+    if (!ensureContactId) {
+      setEnsurePropsModal(false);
+      return;
+    }
+    setCreating(true);
+    try {
+      // Marcar el contacto como ignorado para ocultar el aviso
+      setIgnoredManyChatContacts(prev => ({ ...prev, [String(ensureContactId)]: true }));
+      setContactMissingMp(null);
+
+      // Si hay una empresa pendiente, asociarla al contacto sin actualizar ManyChat
+      if (pendingCompanyId) {
+        const assocRes = await fetch('/api/hubspot/associations/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fromType: 'contacts', fromId: String(ensureContactId), toType: 'companies', toId: String(pendingCompanyId) }),
+        });
+        const assocData = await assocRes.json();
+        if (!assocRes.ok) throw new Error(assocData?.error || 'No se pudo asociar la empresa al contacto');
+      }
+
+      // Cerrar modal y refrescar
+      setEnsurePropsModal(false);
+      setEnsureContactId(null);
+      setPendingCompanyId(null);
+      setEnsureForm({ mp_live_chat_url: '' });
+
+      if (selectedDeal?.id) {
+        const dealsRes = await fetch('/api/hubspot/deals');
+        const dealsJson = await dealsRes.json();
+        const results = dealsJson?.data?.results || [];
+        setDeals(results);
+        const updated = results.find((d: any) => String(d.id) === String(selectedDeal.id));
+        if (updated) {
+          onDealSelected(updated);
+        }
+      }
+    } catch (err: any) {
+      alert(err?.message ?? 'Error al continuar sin ManyChat');
     } finally {
       setCreating(false);
     }
@@ -400,6 +480,15 @@ export default function DealSelector({ onDealSelected, selectedDeal, disabled = 
                     setEnsurePropsModal(true);
                   }}
                 >Completar link de ManyChat</button>
+                <button
+                  type="button"
+                  className="px-2 py-1 text-xs rounded bg-gray-600 text-white"
+                  onClick={() => {
+                    // Bypass: ocultar aviso y permitir continuar
+                    setIgnoredManyChatContacts(prev => ({ ...prev, [String(contactMissingMp.id)]: true }));
+                    setContactMissingMp(null);
+                  }}
+                >El contacto no viene de ManyChat</button>
               </div>
             </div>
           )}
@@ -475,6 +564,7 @@ export default function DealSelector({ onDealSelected, selectedDeal, disabled = 
             </div>
             <div className="flex justify-end gap-2">
               <button className="px-3 py-1 text-xs rounded bg-blue-600 text-white" onClick={updateContactPropsAndAssociate} disabled={creating || !ensureForm.mp_live_chat_url}>Actualizar y asociar</button>
+              <button className="px-3 py-1 text-xs rounded bg-gray-600 text-white" onClick={bypassManyChatAndAssociate} disabled={creating}>El contacto no viene de ManyChat</button>
             </div>
           </div>
         </div>

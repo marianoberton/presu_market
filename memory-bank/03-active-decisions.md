@@ -248,6 +248,19 @@
 - Subtotal se calcula como `precio × cantidad`.
 - Se puede marcar como "A COTIZAR" como los demás.
 ## [2025-11-14] Variación de cantidad en Condiciones
+
+### [2025-11-14] HubSpot/Deals: excluir empresas con `name` vacío del conteo
+**Contexto**: HubSpot puede crear/asociar compañías automáticamente por dominio de email, generando "stub" sin nombre. En la UI aparecía `Companies = 1` aunque la empresa asociada no tenía `name`.
+**Alternativas consideradas**:
+- A) Contar todas las empresas (IDs únicos), sin validar propiedades
+- B) Excluir empresas con `name` vacío o no definido
+- C) Mostrar desglose (directas vs vía contacto) y advertir cuando `name` está vacío
+**Decisión**: B) Excluir empresas con `name` vacío o no definido del conteo.
+**Rationale**: Refleja mejor la realidad del negocio; evita "falsos positivos" por compañías auto‑generadas sin datos útiles.
+**Consecuencias**:
+- API `/api/hubspot/deals`: `__assoc.companiesUniqueCount` se calcula sobre la unión de empresas (deal + contactos) filtrando aquellas con `name.trim().length === 0` o `name` ausente.
+- UI `DealSelector`: usa `meta.companiesUniqueCount` cuando está disponible; fallback calcula unión si falta la meta.
+- Se hoistan `companiesMap` y `companiesFromContactsMap` para disponer de propiedades al momento de filtrar.
 ### [2025-11-14] HubSpot: Conteo de empresas en UI
 **Contexto**: Algunos deals no tienen empresas asociadas directamente, pero sus contactos sí. El usuario necesita ver un conteo representativo en la UI.
 **Alternativas consideradas**: 
@@ -388,3 +401,15 @@ Alternativas consideradas: A) Mantener `/api/hubspot/test-associations` y ajusta
 Decisión: Exponer `__assoc` (IDs y conteos) en la respuesta de `/api/hubspot/deals` para cada deal y refactorizar `DealSelector` para usar esa meta, eliminando la llamada a `/api/hubspot/test-associations`.
 Rationale: Reduce puntos de falla en producción, evita HTML 404s, unifica la fuente de verdad y simplifica la UI. Mantiene el runtime Node.js y el acceso consistente a tokens. Menor acoplamiento cliente↔API.
 Consecuencias: La UI ya no requiere `test-associations`. El backend añade campos meta opcionales `__assoc` sin romper contratos existentes. Se documenta el cambio para auditoría.
+### [2025-11-14] Renombrado de deal al crear empresa
+**Contexto**: Al crear una empresa para un deal, se requiere que el nombre del deal refleje el nombre de la empresa.
+**Alternativas consideradas**:
+- A) Mantener `dealname` original
+- B) Actualizar `dealname` manualmente luego en HubSpot
+- C) Actualizar automáticamente `dealname` en el flujo de creación de empresa
+**Decisión**: C) Actualizar automáticamente el `dealname` del deal al nombre de la empresa recién creada.
+**Rationale**: Consistencia inmediata en CRM y en la UI; evita pasos manuales y reduce errores.
+**Consecuencias**:
+- Nueva ruta API: `PATCH /api/hubspot/deals/update` para actualizar propiedades del deal (usa `runtime=nodejs`).
+- `DealSelector`: tras crear empresa, se invoca el update del deal con `dealname = company.name`.
+- UI refresca deals para mostrar el nuevo nombre.

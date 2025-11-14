@@ -105,7 +105,9 @@ export async function GET() {
       const dealToContactsMap = new Map<string, string[]>();
       let dealToCompaniesMap: Map<string, string[]> = new Map();
       const contactsMap = new Map<string, any>();
+      const companiesMap = new Map<string, any>();
       const contactToCompaniesMap = new Map<string, string[]>();
+      const companiesFromContactsMap = new Map<string, any>();
       let allContactIds: string[] = [];
       
       try {
@@ -252,7 +254,7 @@ export async function GET() {
 
             if (companiesResponse.ok) {
               const companiesData = await companiesResponse.json();
-              const companiesMap = new Map<string, any>();
+              // companiesMap definido arriba
               if (companiesData.results) {
                 for (const company of companiesData.results) {
                   companiesMap.set(company.id, company.properties);
@@ -333,7 +335,7 @@ export async function GET() {
 
               if (companiesFromContactsResp.ok) {
                 const companiesFromContactsData = await companiesFromContactsResp.json();
-                const companiesFromContactsMap = new Map<string, any>();
+                // companiesFromContactsMap definido arriba
                 if (companiesFromContactsData.results) {
                   for (const company of companiesFromContactsData.results) {
                     companiesFromContactsMap.set(company.id, company.properties);
@@ -376,10 +378,16 @@ export async function GET() {
         const companiesFromContacts = contactIds
           .map(cid => contactToCompaniesMap.get(cid) || [])
           .flat();
-        const uniqueCompanyIds = Array.from(new Set([
+        const unionCompanyIds = Array.from(new Set([
           ...companiesFromDeal,
           ...companiesFromContacts,
         ])).filter(Boolean);
+        // Excluir empresas con `name` vacío o no definido
+        const uniqueCompanyIds = unionCompanyIds.filter((id) => {
+          const props = companiesMap.get(String(id)) || companiesFromContactsMap.get(String(id)) || {};
+          const name = props?.name;
+          return typeof name === 'string' ? name.trim().length > 0 : Boolean(name);
+        });
 
         // Detectar contacto con mp_live_chat_url faltante (primer contacto faltante)
         let missingManyChat: { id: string; properties: Record<string, any> } | null = null;
