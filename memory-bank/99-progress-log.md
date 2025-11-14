@@ -167,3 +167,4 @@ La aplicación está lista para uso en producción y puede ser extendida fácilm
 - ✅ UI mejora el mensaje al actualizar contacto mostrando detalles del error devueltos por HubSpot.
 - ✅ Parsing del link de ManyChat robustecido (trim + búsqueda independiente de ambos IDs).
 [2025-11-14] Repositorio: rollback a commit `8cee136` y promoción como HEAD remoto (`origin/master`) mediante `--force-with-lease`. Links: commit 8cee136
+[2025-11-14] HubSpot/Deals: Unificada meta de asociaciones en `/api/hubspot/deals` y refactorizada UI `DealSelector` para consumir `__assoc`. Se elimina dependencia de `/api/hubspot/test-associations` que retornaba 404 en producción. Links: src/app/api/hubspot/deals/route.ts, src/components/forms/deal-selector.tsx, src/lib/types/presupuesto.ts, memory-bank/03-active-decisions.md

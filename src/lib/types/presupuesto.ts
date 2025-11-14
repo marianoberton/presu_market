@@ -31,6 +31,15 @@ export interface HubSpotDeal {
       }>;
     };
   };
+  // Meta opcional agregada en el backend para facilitar la UI
+  __assoc?: {
+    contactIds?: string[];
+    companyIdsFromDeal?: string[];
+    companyIdsFromContacts?: string[];
+    contactsCount?: number;
+    companiesUniqueCount?: number;
+    missingManyChatContact?: { id: string; properties: Record<string, any> } | null;
+  };
 }
 
 export interface HubSpotDealsResponse {

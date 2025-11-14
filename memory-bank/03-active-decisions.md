@@ -382,3 +382,9 @@ Consecuencias: Aumenta la carga de la petición inicial de deals pero evita otra
 **Consecuencias**:
 - Homogeneidad de runtime para endpoints HubSpot.
 - UI actualizada para detectar respuestas no‑JSON en la carga de asociaciones.
+## [2025-11-14] Unificar meta de asociaciones en `/api/hubspot/deals`
+Contexto: Producción devolvía HTML (404) en `/api/hubspot/test-associations`, rompiendo la UI al seleccionar deal. Se requiere evitar dependencia de rutas no desplegadas y simplificar la carga de asociaciones.
+Alternativas consideradas: A) Mantener `/api/hubspot/test-associations` y ajustar caching; B) Forzar redeploy y verificación manual de rutas; C) Exponer meta de asociaciones directamente desde `/api/hubspot/deals` y consumirla en la UI.
+Decisión: Exponer `__assoc` (IDs y conteos) en la respuesta de `/api/hubspot/deals` para cada deal y refactorizar `DealSelector` para usar esa meta, eliminando la llamada a `/api/hubspot/test-associations`.
+Rationale: Reduce puntos de falla en producción, evita HTML 404s, unifica la fuente de verdad y simplifica la UI. Mantiene el runtime Node.js y el acceso consistente a tokens. Menor acoplamiento cliente↔API.
+Consecuencias: La UI ya no requiere `test-associations`. El backend añade campos meta opcionales `__assoc` sin romper contratos existentes. Se documenta el cambio para auditoría.

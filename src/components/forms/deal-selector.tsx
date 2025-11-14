@@ -96,40 +96,35 @@ export default function DealSelector({ onDealSelected, selectedDeal, disabled = 
       setAssocLoading(true);
       setAssocError(null);
       try {
-        const url = `/api/hubspot/test-associations?dealId=${selectedDeal.id}&fallback=true`;
-        const res = await fetch(url);
-        const contentType = res.headers.get('content-type') || '';
-        const isJson = contentType.includes('application/json');
-        const raw = isJson ? await res.json() : await res.text();
-        if (!isJson) {
-          const preview = typeof raw === 'string' ? raw.slice(0, 180) : '';
-          throw new Error(`Respuesta no JSON (${res.status}). Vista previa: ${preview}`);
-        }
-        if (!res.ok) throw new Error(raw?.error || 'Error al cargar asociaciones');
-        const payload = raw?.data ?? raw;
-
-        const contacts = Array.isArray(payload?.contacts) ? payload.contacts : [];
-        const companiesFromDeal = Array.isArray(payload?.companiesFromDeal) ? payload.companiesFromDeal : [];
-        const companiesFromContacts = Array.isArray(payload?.companiesFromContacts) ? payload.companiesFromContacts : [];
-        const uniqueCompanyIds = Array.from(
-          new Set([
-            ...companiesFromDeal.map((c: any) => String(c.id)).filter(Boolean),
-            ...companiesFromContacts.map((c: any) => String(c.id)).filter(Boolean),
-          ])
-        );
-        setAssocCounts({
-          contacts: contacts.length,
-          companies: uniqueCompanyIds.length,
-        });
-        setAssocContactIds(contacts.map((c: any) => String(c.id)).filter(Boolean));
-        // Detectar contacto con mp_* faltantes
-        const missing = contacts.find((c: any) => {
-          const p = c?.properties || {};
-          return !p?.mp_live_chat_url;
-        });
-        if (missing?.id) {
-          setContactMissingMp({ id: String(missing.id), props: missing.properties || {} });
+        const meta = (selectedDeal as any).__assoc || null;
+        if (meta) {
+          const contacts = Array.isArray(meta.contactIds) ? meta.contactIds : [];
+          const companiesFromDeal = Array.isArray(meta.companyIdsFromDeal) ? meta.companyIdsFromDeal : [];
+          const companiesFromContacts = Array.isArray(meta.companyIdsFromContacts) ? meta.companyIdsFromContacts : [];
+          const uniqueCompanyIds = Array.from(new Set([
+            ...companiesFromDeal.map((id: any) => String(id)).filter(Boolean),
+            ...companiesFromContacts.map((id: any) => String(id)).filter(Boolean),
+          ]));
+          setAssocCounts({
+            contacts: contacts.length,
+            companies: uniqueCompanyIds.length,
+          });
+          setAssocContactIds(contacts.map((id: any) => String(id)).filter(Boolean));
+          const missing = meta.missingManyChatContact || null;
+          if (missing?.id) {
+            setContactMissingMp({ id: String(missing.id), props: missing.properties || {} });
+          } else {
+            setContactMissingMp(null);
+          }
         } else {
+          // Fallback: intentar computar desde asociaciones básicas si existen
+          const assocContacts = selectedDeal.associations?.contacts?.results || [];
+          const contactIds = assocContacts.map((c: any) => String(c.id)).filter(Boolean);
+          setAssocCounts({
+            contacts: contactIds.length,
+            companies: 0, // sin meta extendida no podemos contar empresas únicas
+          });
+          setAssocContactIds(contactIds);
           setContactMissingMp(null);
         }
       } catch (err: any) {
@@ -167,22 +162,15 @@ export default function DealSelector({ onDealSelected, selectedDeal, disabled = 
 
       setShowContactModal(false);
           setContactForm({ firstname: '', lastname: '', email: '', phone: '', mp_live_chat_url: '' });
-      // Reload associations
-      const url = `/api/hubspot/test-associations?dealId=${selectedDeal.id}&fallback=true`;
-      const res = await fetch(url);
-      const raw = await res.json();
-      const payload = raw?.data ?? raw;
-      const contacts = Array.isArray(payload?.contacts) ? payload.contacts : [];
-      const companiesFromDeal = Array.isArray(payload?.companiesFromDeal) ? payload.companiesFromDeal : [];
-      const companiesFromContacts = Array.isArray(payload?.companiesFromContacts) ? payload.companiesFromContacts : [];
-      const uniqueCompanyIds = Array.from(
-        new Set([
-          ...companiesFromDeal.map((c: any) => String(c.id)).filter(Boolean),
-          ...companiesFromContacts.map((c: any) => String(c.id)).filter(Boolean),
-        ])
-      );
-      setAssocCounts({ contacts: contacts.length, companies: uniqueCompanyIds.length });
-      setAssocContactIds(contacts.map((c: any) => String(c.id)).filter(Boolean));
+      // Reload associations via deals API to get meta actualizado
+      const dealsRes = await fetch('/api/hubspot/deals');
+      const dealsJson = await dealsRes.json();
+      const results = dealsJson?.data?.results || [];
+      setDeals(results);
+      const updated = results.find((d: any) => String(d.id) === String(selectedDeal.id));
+      if (updated) {
+        onDealSelected(updated);
+      }
     } catch (err: any) {
       alert(err?.message ?? 'Error al crear y asociar el contacto');
     } finally {
@@ -243,22 +231,16 @@ export default function DealSelector({ onDealSelected, selectedDeal, disabled = 
 
       setShowCompanyModal(false);
       setCompanyForm({ name: '', province: '', city: '', address: '' });
-      // Reload associations
-      const url = `/api/hubspot/test-associations?dealId=${selectedDeal.id}&fallback=true`;
-      const res = await fetch(url);
-      const raw = await res.json();
-      const payload = raw?.data ?? raw;
-      const contacts = Array.isArray(payload?.contacts) ? payload.contacts : [];
-      const companiesFromDeal = Array.isArray(payload?.companiesFromDeal) ? payload.companiesFromDeal : [];
-      const companiesFromContacts = Array.isArray(payload?.companiesFromContacts) ? payload.companiesFromContacts : [];
-      const uniqueCompanyIds = Array.from(
-        new Set([
-          ...companiesFromDeal.map((c: any) => String(c.id)).filter(Boolean),
-          ...companiesFromContacts.map((c: any) => String(c.id)).filter(Boolean),
-        ])
-      );
-      setAssocCounts({ contacts: contacts.length, companies: uniqueCompanyIds.length });
-      setAssocContactIds(contacts.map((c: any) => String(c.id)).filter(Boolean));
+      // Reload associations via deals API to get meta actualizado
+      const dealsRes = await fetch('/api/hubspot/deals');
+      const dealsJson = await dealsRes.json();
+      const results = dealsJson?.data?.results || [];
+      setDeals(results);
+      const updated = results.find((d: any) => String(d.id) === String(selectedDeal.id));
+      if (updated) {
+        onDealSelected(updated);
+      }
+      // Los conteos serán recalculados desde meta en useEffect
     } catch (err: any) {
       alert(err?.message ?? 'Error al crear y asociar la empresa');
     } finally {
@@ -302,31 +284,15 @@ export default function DealSelector({ onDealSelected, selectedDeal, disabled = 
       setPendingCompanyId(null);
       setEnsureForm({ mp_live_chat_url: '' });
 
-      // Reload associations
+      // Reload associations via deals API to get meta actualizado
       if (selectedDeal?.id) {
-        const url = `/api/hubspot/test-associations?dealId=${selectedDeal.id}&fallback=true`;
-        const res = await fetch(url);
-        const raw = await res.json();
-        const payload = raw?.data ?? raw;
-        const contacts = Array.isArray(payload?.contacts) ? payload.contacts : [];
-        const companiesFromDeal = Array.isArray(payload?.companiesFromDeal) ? payload.companiesFromDeal : [];
-        const companiesFromContacts = Array.isArray(payload?.companiesFromContacts) ? payload.companiesFromContacts : [];
-        const uniqueCompanyIds = Array.from(
-          new Set([
-            ...companiesFromDeal.map((c: any) => String(c.id)).filter(Boolean),
-            ...companiesFromContacts.map((c: any) => String(c.id)).filter(Boolean),
-          ])
-        );
-        setAssocCounts({ contacts: contacts.length, companies: uniqueCompanyIds.length });
-        setAssocContactIds(contacts.map((c: any) => String(c.id)).filter(Boolean));
-        const missing = contacts.find((c: any) => {
-          const p = c?.properties || {};
-          return !p?.mp_live_chat_url;
-        });
-        if (missing?.id) {
-          setContactMissingMp({ id: String(missing.id), props: missing.properties || {} });
-        } else {
-          setContactMissingMp(null);
+        const dealsRes = await fetch('/api/hubspot/deals');
+        const dealsJson = await dealsRes.json();
+        const results = dealsJson?.data?.results || [];
+        setDeals(results);
+        const updated = results.find((d: any) => String(d.id) === String(selectedDeal.id));
+        if (updated) {
+          onDealSelected(updated);
         }
       }
     } catch (err: any) {

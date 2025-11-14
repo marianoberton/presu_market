@@ -103,6 +103,9 @@ export async function GET() {
       const dealIds = filteredDeals.map(deal => ({ id: deal.id }));
       // Variables compartidas para usar fallback contacto→empresa más adelante
       const dealToContactsMap = new Map<string, string[]>();
+      let dealToCompaniesMap: Map<string, string[]> = new Map();
+      const contactsMap = new Map<string, any>();
+      const contactToCompaniesMap = new Map<string, string[]>();
       let allContactIds: string[] = [];
       
       try {
@@ -147,13 +150,13 @@ export async function GET() {
               },
               body: JSON.stringify({
                 inputs: allContactIds.map(id => ({ id: String(id) })),
-                properties: ['firstname', 'lastname', 'email', 'phone']
+                properties: ['firstname', 'lastname', 'email', 'phone', 'mp_live_chat_url']
               })
             });
 
             if (contactsResponse.ok) {
               const contactsData = await contactsResponse.json();
-              const contactsMap = new Map();
+              // contactsMap definido arriba
               
               if (contactsData.results) {
                 for (const contact of contactsData.results) {
@@ -218,7 +221,7 @@ export async function GET() {
           const associationsCompaniesData = await associationsCompaniesResponse.json();
           console.log('Associations de empresas obtenidas:', JSON.stringify(associationsCompaniesData, null, 2));
 
-          const dealToCompaniesMap = new Map<string, string[]>();
+          dealToCompaniesMap = new Map<string, string[]>();
           if (associationsCompaniesData.results) {
             for (const result of associationsCompaniesData.results) {
               if (result.to && result.to.length > 0) {
@@ -298,7 +301,7 @@ export async function GET() {
 
           if (contactCompaniesAssocResp.ok) {
             const contactCompaniesAssocData = await contactCompaniesAssocResp.json();
-            const contactToCompaniesMap = new Map<string, string[]>();
+            // usar mapa predefinido contactToCompaniesMap
 
             if (contactCompaniesAssocData.results) {
               for (const result of contactCompaniesAssocData.results) {
@@ -364,6 +367,39 @@ export async function GET() {
         }
       } catch (contactCompaniesError) {
         console.warn('Error en fallback contacto→empresa:', contactCompaniesError);
+      }
+
+      // Adjuntar meta de asociaciones (__assoc) a cada deal para consumo del cliente
+      for (const deal of filteredDeals) {
+        const contactIds = dealToContactsMap.get(deal.id) || [];
+        const companiesFromDeal = dealToCompaniesMap.get(deal.id) || [];
+        const companiesFromContacts = contactIds
+          .map(cid => contactToCompaniesMap.get(cid) || [])
+          .flat();
+        const uniqueCompanyIds = Array.from(new Set([
+          ...companiesFromDeal,
+          ...companiesFromContacts,
+        ])).filter(Boolean);
+
+        // Detectar contacto con mp_live_chat_url faltante (primer contacto faltante)
+        let missingManyChat: { id: string; properties: Record<string, any> } | null = null;
+        for (const cid of contactIds) {
+          const props = contactsMap.get(cid) || {};
+          if (!props?.mp_live_chat_url) {
+            missingManyChat = { id: String(cid), properties: props };
+            break;
+          }
+        }
+
+        // Adjuntar meta sin tocar propiedades originales de HubSpot
+        (deal as any).__assoc = {
+          contactIds,
+          companyIdsFromDeal: companiesFromDeal,
+          companyIdsFromContacts: companiesFromContacts,
+          contactsCount: contactIds.length,
+          companiesUniqueCount: uniqueCompanyIds.length,
+          missingManyChatContact: missingManyChat,
+        };
       }
     }
 
