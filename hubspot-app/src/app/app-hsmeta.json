@@ -15,13 +15,14 @@
       "optionalScopes": [],
       "conditionallyRequiredScopes": []
     },
-    "permittedUrls": {
-      "fetch": [
-        "https://generador-presupuestos-fomo.vercel.app",
-        "https://api.hubapi.com"
-      ],
-      "iframe": [],
-      "img": []
-    }
+  "permittedUrls": {
+    "fetch": [
+      "https://api.hubapi.com",
+      "https://presu-market.vercel.app",
+      "https://n8n-n8n.jjwsfm.easypanel.host"
+    ],
+    "iframe": [],
+    "img": []
+  }
   }
 }

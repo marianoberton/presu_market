@@ -209,7 +209,7 @@ export const VARIACION_CANTIDAD_OPTIONS = [
 // Condiciones fijas que se agregan automáticamente
 export const CONDICIONES_FIJAS = {
   entregaCABA: "Presupuesto contempla una entrega CABA, por el total del presupuesto.",
-  entregaPalletizada: "La mercadería se entrega palletizada.",
+  entregaPalletizada: "La mercadería se entrega palletizada para pedidos mayoristas.",
   enviosInterior: "Envíos al interior: Entregamos en el transporte que ustedes trabajen dentro del radio de CABA.",
   validez: "El presente presupuesto tiene una validez de 48 hs desde su emisión, vencido ese plazo se vuelve a cotizar."
 };

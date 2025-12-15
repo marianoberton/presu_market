@@ -452,7 +452,11 @@ export function PDFDocument({ data }: PDFDocumentProps) {
                   <Text style={[styles.cellText, styles.col4]}>{producto.ancho || '-'}</Text>
                   <Text style={[styles.cellText, styles.col5]}>{producto.alto || '-'}</Text>
                   <Text style={[styles.cellText, styles.col6]}>{producto.calidad || '-'}</Text>
-                  <Text style={[styles.cellText, styles.col7]}>{producto.color || '-'}</Text>
+                  <Text style={[styles.cellText, styles.col7]}>
+                    {['polimero', 'bandeja', 'sacabocado', 'otros-items'].includes(producto.tipo) 
+                      ? (producto.color || '') 
+                      : (producto.color || '-')}
+                  </Text>
                   <Text style={[styles.cellText, styles.col8]}>{producto.cantidad}</Text>
                   <Text style={[styles.cellTextBold, styles.col9]}>
                     {producto.aCotizar ? '-' : formatearMoneda(producto.precioUnitario)}

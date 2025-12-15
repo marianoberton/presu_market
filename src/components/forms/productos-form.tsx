@@ -361,6 +361,20 @@ export function ProductosForm({ productos, onChange }: ProductosFormProps) {
                       </div>
                     )}
 
+                    {/* Color - Input libre para estos items */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Color
+                      </label>
+                      <Input
+                        type="text"
+                        value={producto.color}
+                        onChange={(e) => actualizarProducto(producto.id, 'color', e.target.value)}
+                        placeholder="Color"
+                        className="w-full"
+                      />
+                    </div>
+
                     {/* Checkbox A Cotizar */}
                     <div className="flex items-center space-x-2 mt-6">
                       <input
@@ -559,21 +573,31 @@ export function ProductosForm({ productos, onChange }: ProductosFormProps) {
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Color del Papel
                       </label>
-                      <Select
-                        value={producto.color}
-                        onValueChange={(value) => actualizarProducto(producto.id, 'color', value)}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Seleccionar color" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {COLOR_OPTIONS.map((opcion) => (
-                            <SelectItem key={opcion} value={opcion}>
-                              {opcion}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      {producto.tipo === 'bandeja' ? (
+                        <Input
+                          type="text"
+                          value={producto.color}
+                          onChange={(e) => actualizarProducto(producto.id, 'color', e.target.value)}
+                          placeholder="Color"
+                          className="w-full"
+                        />
+                      ) : (
+                        <Select
+                          value={producto.color}
+                          onValueChange={(value) => actualizarProducto(producto.id, 'color', value)}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Seleccionar color" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {COLOR_OPTIONS.map((opcion) => (
+                              <SelectItem key={opcion} value={opcion}>
+                                {opcion}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
                     </div>
                   </div>
                 )}

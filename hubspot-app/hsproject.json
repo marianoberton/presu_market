@@ -6,6 +6,7 @@
   "runtime": "nodejs18.x",
   "scopes": [
     "crm.objects.deals.read",
-    "crm.objects.deals.write"
+    "crm.objects.deals.write",
+    "crm.objects.contacts.read"
   ]
 }

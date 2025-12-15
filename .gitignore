@@ -48,3 +48,6 @@ src/app/api/hubspot/test-associations/
 
 # Dev preview
 /dev-preview
+
+# Dev-only utility scripts (ignored)
+scripts/list-deal-stages.js
