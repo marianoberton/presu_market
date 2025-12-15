@@ -133,7 +133,7 @@ export const DEFAULT_PRODUCT_VALUES = {
 
 export const DEFAULT_CONDITIONS: CondicionesData = {
   condicionesPago: "50% anticipo por transferencia bancaria. Una vez acreditado el importe se toma el pedido. Enviar OC.\nEl resto del pago, 48 hs previo a la entrega. Una vez acreditado se coordina entrega.",
-  condicionesEntrega: "Demora producción 15 días aprox.\nLa mercadería se entrega palletizada. Debe contar con personal para la descarga.\nEnvíos al interior. Entregamos en el transporte que ustedes trabajen dentro del radio de CABA.",
+  condicionesEntrega: "Demora producción 15 días aprox.\nLa mercadería se entrega palletizada para pedidos mayoristas. Debe contar con personal para la descarga.\nEnvíos al interior. Entregamos en el transporte que ustedes trabajen dentro del radio de CABA.",
   validez: "El presente presupuesto tiene una validez de 48 hs desde su emisión, vencido ese plazo se vuelve a cotizar.",
   aclaracionesTecnicas: "Las medidas cotizadas son medidas externas y dispuestas en largo x ancho x alto\nLa cantidad final de cajas a medida e impresas puede variar, no es exacta; la producción total se define al momento que se termina la producción, puede variar en un 5%\nEn caso de ser impresa, no trabajamos con Pantone, los colores se arman similares, pueden tener diferencias.\nEn caso de descarga manual, deben contar con personal para realizarlo.",
   // Valores por defecto para los nuevos campos

@@ -582,7 +582,7 @@ const PresuCard = ({ context, actions }: any) => {
         dealstage: 'Qualified to Buy',
         mp_items_json: JSON.stringify(sampleItems),
         mp_condiciones_pago: '50% anticipo por transferencia bancaria. Una vez acreditado el importe se toma el pedido. Enviar OC.\nEl resto del pago, 48 hs previo a la entrega.',
-        mp_condiciones_entrega: 'Demora producción 15 días aprox.\nLa mercadería se entrega palletizada. Debe contar con personal para la descarga.',
+        mp_condiciones_entrega: 'Demora producción 15 días aprox.\nLa mercadería se entrega palletizada para pedidos mayoristas. Debe contar con personal para la descarga.',
         mp_total_subtotal: '15000',
         mp_total_iva: '3150',
         mp_total_final: '18150',
