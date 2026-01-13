@@ -14,7 +14,7 @@ import { calcularTotales } from '@/lib/calculations';
 import { Download, Upload } from 'lucide-react';
 import Image from 'next/image';
 
-export default function Home() {
+export default function PresupuestadorPage() {
   const [datosCliente, setDatosCliente] = useState<ClienteData>({
     nombre: '',
     email: '',

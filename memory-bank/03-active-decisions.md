@@ -99,6 +99,42 @@
 - UI más consistente y mantenible
 - Curva de aprendizaje inicial
 
+### [2025-01-13] Reestructuración de Rutas y Layout
+**Contexto**: Necesidad de agregar nueva funcionalidad "Encuestas" y mejorar la navegación.
+**Alternativas consideradas**:
+- A) Agregar links en el header existente
+- B) Crear layout con Sidebar lateral
+- C) Usar rutas separadas sin navegación compartida
+
+**Decisión**: Layout con Sidebar Lateral (src/app/(main)/layout.tsx)
+**Rationale**:
+- Escalabilidad para futuras herramientas internas
+- Navegación clara entre módulos (Presupuestador / Encuestas)
+- Aspecto más profesional y tipo "Dashboard"
+
+**Consecuencias**:
+- Refactorización de la página principal a /presupuestador
+- Creación de nueva página Dashboard en /
+- Mayor estructura de carpetas en src/app
+
+### [2025-01-13] Implementación de Encuestas
+**Contexto**: Requerimiento de enviar encuestas de satisfacción para deals ganados.
+**Alternativas consideradas**:
+- A) Integración directa en HubSpot
+- B) Módulo propio en la aplicación
+- C) Servicio externo (Typeform, etc.)
+
+**Decisión**: Módulo propio en /encuestas
+**Rationale**:
+- Control total sobre el flujo y UI
+- Integración directa con API de HubSpot (fetch deals)
+- Posibilidad de automatización personalizada (triggers)
+
+**Consecuencias**:
+- Nueva vista con lista de deals y triggers manuales/automáticos
+- Mockup de encuesta para visualización del cliente
+- Requiere `HUBSPOT_STAGE_WON` en `.env.local` para filtrar deals ganados.
+
 ### [2025-12-15] Color Editable para Productos Específicos
 **Contexto**: Necesidad de campo de color libre para Polímero, Bandeja, Sacabocado y Otros Items.
 **Decisión**: 

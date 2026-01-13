@@ -1,14 +1,20 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { HubSpotDealsResponse, ApiResponse } from '@/lib/types/presupuesto';
 
 // Asegurar ejecución en Node.js para acceso estable a process.env y fetch
 export const runtime = 'nodejs';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const token = process.env.HUBSPOT_TOKEN;
     const pipeline = process.env.HUBSPOT_PIPELINE;
-    const stageInicial = process.env.HUBSPOT_STAGE_INICIAL;
+    const searchParams = request.nextUrl.searchParams;
+    const stageParam = searchParams.get('stage');
+    // Si se pasa 'won', usamos el stage de ganados (configurado en env o 'closedwon')
+    // Si no, usamos el stage inicial por defecto
+    const stageInicial = stageParam === 'won' 
+      ? (process.env.HUBSPOT_STAGE_WON || 'closedwon') 
+      : (stageParam || process.env.HUBSPOT_STAGE_INICIAL);
 
     if (!token) {
       return NextResponse.json<ApiResponse>({
@@ -64,6 +70,12 @@ export async function GET() {
           'mp_cliente_email', 
           'mp_cliente_telefono',
           'associations.contact' // Pseudo-property para obtener associations
+        ],
+        sorts: [
+          {
+            propertyName: 'hs_lastmodifieddate',
+            direction: 'DESCENDING'
+          }
         ],
         limit: 100
       })

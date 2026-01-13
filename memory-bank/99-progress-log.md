@@ -69,6 +69,14 @@
 - ✅ Actualizado texto de condiciones de entrega ("para pedidos mayoristas").
 - **Links**: src/components/forms/productos-form.tsx, src/pdf/components/pdf-document.tsx, src/lib/types.ts
 
+### [2025-01-13] Encuestas y Reestructuración
+- ✅ Refactorizada estructura de rutas: Presupuestador movido a `/presupuestador`.
+- ✅ Creado Dashboard principal en `/` con selección de herramientas.
+- ✅ Implementado Layout con Sidebar Lateral para módulo principal.
+- ✅ Creada vista de Encuestas en `/encuestas` con Mockup y triggers (manual/auto).
+- ✅ Actualizada API de HubSpot para soportar filtro por stage (`?stage=won`).
+- **Links**: src/app/(main)/, src/components/layout/, src/app/api/hubspot/deals/route.ts
+
 ## Próximos Pasos Sugeridos
 
 ### Mejoras Futuras (Opcional)
