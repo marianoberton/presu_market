@@ -65,6 +65,7 @@ export interface DealUpdatePayload {
   properties: Record<string, string>;
   moveToStage?: boolean;
   targetStage?: string;
+  items?: any[]; // Array de productos para crear Line Items
 }
 
 export interface ApiResponse<T = unknown> {

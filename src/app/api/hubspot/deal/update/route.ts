@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { DealUpdatePayload, ApiResponse } from '@/lib/types/presupuesto';
+import { borrarLineItemsAnteriores, crearLineItemsHubSpot } from '@/lib/hubspot-line-items';
 
 export async function POST(request: NextRequest) {
   try {
@@ -63,6 +64,43 @@ export async function POST(request: NextRequest) {
     }
 
     const updatedDeal = await response.json();
+
+    // Gestionar Line Items si se proporcionan en el payload
+    if (payload.items && Array.isArray(payload.items) && payload.items.length > 0) {
+      try {
+        const targetPipeline = process.env.HUBSPOT_PIPELINE;
+        let dealPipeline = updatedDeal.properties?.pipeline;
+
+        // Si no tenemos el pipeline en la respuesta del PATCH, lo consultamos
+        if (!dealPipeline) {
+           const dealCheck = await fetch(`https://api.hubapi.com/crm/v3/objects/deals/${payload.dealId}?properties=pipeline`, {
+             headers: { 'Authorization': `Bearer ${token}` }
+           });
+           if (dealCheck.ok) {
+             const dealData = await dealCheck.json();
+             dealPipeline = dealData.properties?.pipeline;
+           }
+        }
+
+        // Solo procesamos Line Items si estamos en el pipeline correcto (o si no hay restricción configurada)
+        if (targetPipeline && dealPipeline !== targetPipeline) {
+           console.log(`Deal ${payload.dealId}: Omitiendo creación de Line Items. Pipeline actual (${dealPipeline}) no coincide con el objetivo (${targetPipeline}).`);
+        } else {
+           console.log(`Deal ${payload.dealId}: Gestionando ${payload.items.length} Line Items...`);
+           
+           // 1. Borrar items anteriores para evitar duplicados
+           await borrarLineItemsAnteriores(payload.dealId, token);
+           
+           // 2. Crear nuevos items y asociarlos
+           await crearLineItemsHubSpot(payload.dealId, payload.items, token);
+           
+           console.log(`Deal ${payload.dealId}: Line Items actualizados correctamente.`);
+        }
+      } catch (itemError) {
+        console.error(`Deal ${payload.dealId}: Error gestionando Line Items:`, itemError);
+        // No fallamos la request completa, pero logueamos el error
+      }
+    }
 
     return NextResponse.json<ApiResponse>({
       success: true,

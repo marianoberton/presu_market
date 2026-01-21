@@ -197,7 +197,8 @@ export default function PresupuestadorPage() {
           mp_tiene_items_a_cotizar: tieneItemsACotizar.toString(),
           mp_pdf_presupuesto_url: fileUrl
         },
-        moveToStage: true // Solo moverá si no hay items a cotizar
+        moveToStage: true, // Solo moverá si no hay items a cotizar
+        items: productos // Enviamos los productos para crear Line Items
       };
 
       // 4. Actualizar deal en HubSpot

@@ -3,9 +3,17 @@
  * Este archivo contiene las funciones para integrar con HubSpot CRM
  */
 
-import { PresupuestoData } from './types';
+import { PresupuestoData, ProductoData } from './types';
 import { getValidToken } from './oauth-storage';
-import { calcularTotales } from './calculations';
+import { calcularTotales, calcularMedidasProduccion } from './calculations';
+
+/**
+ * Elimina las asociaciones de Line Items existentes de un Deal
+ * Para evitar duplicados al actualizar un presupuesto
+ */
+// La implementación se ha movido a hubspot-line-items.ts
+// Mantenemos la referencia aquí si es necesario, o la eliminamos del todo.
+// Como ya se re-exporta arriba, podemos eliminar las funciones duplicadas.
 
 /**
  * Función para generar y enviar presupuesto a HubSpot
@@ -56,7 +64,17 @@ export async function actualizarDealHubSpot(dealId: string, presupuestoData: Pre
       throw new Error(`Error actualizando deal en HubSpot: ${JSON.stringify(errorData)}`);
     }
 
-    console.log('[HubSpot] Deal actualizado correctamente');
+    console.log('[HubSpot] Deal actualizado correctamente. Procesando Line Items...');
+
+    // Limpiar Line Items anteriores
+    await borrarLineItemsAnteriores(dealId, token);
+
+    // Crear nuevos Line Items
+    if (presupuestoData.productos && presupuestoData.productos.length > 0) {
+        await crearLineItemsHubSpot(dealId, presupuestoData.productos, token);
+    }
+
+    console.log('[HubSpot] Actualización completa (Deal + Line Items).');
   } catch (error) {
     console.error('[HubSpot] Error en actualizarDealHubSpot:', error);
     throw error;

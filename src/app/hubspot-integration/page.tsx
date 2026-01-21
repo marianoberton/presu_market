@@ -10,7 +10,7 @@ function HubSpotIntegrationContent() {
   const handleOAuthConnect = () => {
     const clientId = process.env.NEXT_PUBLIC_HUBSPOT_CLIENT_ID;
     const redirectUri = encodeURIComponent(process.env.NEXT_PUBLIC_HUBSPOT_REDIRECT_URI || 'https://presu-market.vercel.app/oauth-callback');
-    const scopes = encodeURIComponent('crm.objects.deals.read crm.objects.deals.write');
+    const scopes = encodeURIComponent('crm.objects.deals.read crm.objects.deals.write e-commerce crm.objects.line_items.write');
     
     if (!clientId) {
       setMessage('❌ Error: Client ID no configurado');
