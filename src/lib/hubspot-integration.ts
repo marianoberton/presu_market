@@ -6,6 +6,7 @@
 import { PresupuestoData, ProductoData } from './types';
 import { getValidToken } from './oauth-storage';
 import { calcularTotales, calcularMedidasProduccion } from './calculations';
+import { borrarLineItemsAnteriores, crearLineItemsHubSpot } from './hubspot-line-items';
 
 /**
  * Elimina las asociaciones de Line Items existentes de un Deal
