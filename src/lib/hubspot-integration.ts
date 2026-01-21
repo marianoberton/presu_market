@@ -5,6 +5,7 @@
 
 import { PresupuestoData } from './types';
 import { getValidToken } from './oauth-storage';
+import { calcularTotales } from './calculations';
 
 /**
  * Función para generar y enviar presupuesto a HubSpot
@@ -22,9 +23,44 @@ export async function generarHubSpot() {
  * @param presupuestoData - Datos del presupuesto generado
  */
 export async function actualizarDealHubSpot(dealId: string, presupuestoData: PresupuestoData): Promise<void> {
-  // TODO: Implementar integración real con HubSpot API
-  console.log('Actualizando deal:', dealId, 'con datos:', presupuestoData);
-  throw new Error('Funcionalidad en desarrollo');
+  try {
+    const token = await getAccessToken();
+    if (!token) {
+      throw new Error('No se encontró token de acceso para HubSpot');
+    }
+
+    // Calcular totales para obtener m²
+    const totales = calcularTotales(presupuestoData.productos);
+    const metrosCuadradosTotales = totales.metrosCuadradosTotales;
+
+    // Preparar payload para HubSpot
+    const properties = {
+      amount: presupuestoData.totales.total.toString(),
+      mp_metros_cuadrados_totales: metrosCuadradosTotales.toString(),
+      dealstage: 'presupuesto_enviado' // Opcional, según requerimiento
+    };
+
+    console.log(`[HubSpot] Actualizando deal ${dealId} con m²: ${metrosCuadradosTotales}`);
+
+    const response = await fetch(`https://api.hubapi.com/crm/v3/objects/deals/${dealId}`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ properties })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(`Error actualizando deal en HubSpot: ${JSON.stringify(errorData)}`);
+    }
+
+    console.log('[HubSpot] Deal actualizado correctamente');
+  } catch (error) {
+    console.error('[HubSpot] Error en actualizarDealHubSpot:', error);
+    throw error;
+  }
 }
 
 /**
