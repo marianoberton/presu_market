@@ -1,5 +1,5 @@
 import { ProductoData } from './types';
-import { calcularMedidasProduccion } from './calculations';
+import { calcularMedidasProduccion, calcularPrecioM2 } from './calculations';
 
 /**
  * Elimina las asociaciones de Line Items existentes de un Deal
@@ -101,19 +101,27 @@ export async function crearLineItemsHubSpot(dealId: string, items: ProductoData[
         }
         const finalPrice = price || 0;
 
-        const body = {
-            properties: {
-                name: name,
-                quantity: cantidad.toString(),
-                price: finalPrice.toString(),
-                // Propiedades personalizadas
-                mp_largo_mm: largo.toString(),
-                mp_ancho_mm: ancho.toString(),
-                mp_alto_mm: alto.toString(),
-                mp_tipo_caja: item.tipo || "otro",
-                mp_metros_cuadrados_item: m2Unitario.toString()
-            },
-            associations: [
+                // Calcular precio por m² (Business Intelligence)
+                // Usamos la función importada para consistencia
+                // Si el item ya tiene precioM2 (por lógica de UI), usamos ese, si no, lo calculamos
+                let precioM2 = item.precioM2;
+                if (precioM2 === undefined || precioM2 === null) {
+                    precioM2 = calcularPrecioM2(finalPrice, m2Unitario);
+                }
+
+                const body = {
+                    properties: {
+                        name: name,
+                        quantity: cantidad.toString(),
+                        price: finalPrice.toString(),
+                        mp_largo_mm: largo.toString(),
+                        mp_ancho_mm: ancho.toString(),
+                        mp_alto_mm: alto.toString(),
+                        mp_tipo_caja: item.tipo || "otro",
+                        mp_metros_cuadrados_item: m2Unitario.toString(),
+                        mp_precio_m2_unitario: precioM2.toString()
+                    },
+                    associations: [
                 {
                     to: { id: dealId },
                     types: [

@@ -123,6 +123,17 @@ export function calcularPrecioUnitario(
 }
 
 /**
+ * Calcula el precio por m² de un producto
+ * Si la superficie es 0, retorna 0 para evitar división por cero
+ */
+export function calcularPrecioM2(precioUnitario: number, superficie: number): number {
+  if (!superficie || superficie <= 0) {
+    return 0;
+  }
+  return Math.round((precioUnitario / superficie) * 100) / 100;
+}
+
+/**
  * Calcula el subtotal de un producto individual
  */
 export function calcularSubtotalProducto(cantidad: number, precioUnitario: number): number {
@@ -144,11 +155,20 @@ export function calcularTotales(productos: ProductoData[]): TotalesData {
   // Calcular m² totales de todos los productos (incluye todos, no solo los que tienen precio)
   const metrosCuadradosTotales = calcularMetrosCuadradosTotales(productos);
 
+  // Calcular precio promedio por m² global
+  // Promedio = Subtotal Presupuesto (Neto) / Total m²
+  let promedioPrecioM2 = 0;
+  if (metrosCuadradosTotales > 0) {
+    // Usamos el subtotal (sin IVA) para que el precio promedio sea comparable con el precio de costo/venta neto
+    promedioPrecioM2 = Math.round((subtotal / metrosCuadradosTotales) * 100) / 100;
+  }
+
   return {
     subtotal: Math.round(subtotal * 100) / 100,
     iva,
     total,
-    metrosCuadradosTotales: Math.round(metrosCuadradosTotales * 100) / 100 // Redondear a 2 decimales
+    metrosCuadradosTotales: Math.round(metrosCuadradosTotales * 100) / 100, // Redondear a 2 decimales
+    promedioPrecioM2
   };
 }
 

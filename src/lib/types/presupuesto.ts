@@ -19,6 +19,7 @@ export interface HubSpotDeal {
     mp_total_iva?: string;
     mp_total_final?: string;
     mp_metros_cuadrados_totales?: number;
+    mp_precio_promedio_m2?: string;
     mp_items_json?: string; // JSON stringificado de los productos
     mp_tiene_items_a_cotizar?: string; // "true" o "false"
     mp_pdf_presupuesto_url?: string;

@@ -26,6 +26,8 @@ export interface ProductoData {
   aCotizar?: boolean; // Indica si el precio es "A COTIZAR"
   // Campo específico para "otros-items": m² totales del ítem (manual)
   metrosCuadradosManual?: number;
+  // Precio por m² (Business Intelligence)
+  precioM2?: number;
 }
 
 export interface CondicionesData {
@@ -47,6 +49,7 @@ export interface TotalesData {
   iva: number;
   total: number;
   metrosCuadradosTotales: number; // m² totales del presupuesto
+  promedioPrecioM2?: number; // Precio promedio por m² (BI)
 }
 
 export interface PresupuestoData {

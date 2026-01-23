@@ -131,6 +131,14 @@ const properties = [
     fieldType: 'number',
     description: 'Total de metros cuadrados del presupuesto (clave para el equipo de ventas)'
   },
+  {
+    groupName: 'dealinformation',
+    name: 'mp_precio_promedio_m2',
+    label: 'Precio Promedio por m²',
+    type: 'number',
+    fieldType: 'number',
+    description: 'Precio promedio por metro cuadrado del presupuesto (Total / m² Totales)'
+  },
   // Items y EstadoDatos Adicionales
   {
     groupName: 'dealinformation',

@@ -185,7 +185,8 @@ export default function PresupuestadorPage() {
           mp_condiciones_pago: condiciones.condicionesPago,
           mp_total_subtotal: totales.subtotal.toString(),
           mp_total_iva: totales.iva.toString(),
-          mp_metros_cuadrados_totales: totales.metrosCuadradosTotales,
+          mp_metros_cuadrados_totales: totales.metrosCuadradosTotales.toString(),
+          mp_precio_promedio_m2: (totales.promedioPrecioM2 || 0).toString(),
           hs_priority: prioridad, // Prioridad usando el campo estándar de HubSpot
           mp_items_json: JSON.stringify(productos.map(p => ({
             descripcion: p.descripcion,

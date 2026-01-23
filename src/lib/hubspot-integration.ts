@@ -41,11 +41,13 @@ export async function actualizarDealHubSpot(dealId: string, presupuestoData: Pre
     // Calcular totales para obtener m²
     const totales = calcularTotales(presupuestoData.productos);
     const metrosCuadradosTotales = totales.metrosCuadradosTotales;
+    const promedioPrecioM2 = totales.promedioPrecioM2 || 0;
 
     // Preparar payload para HubSpot
     const properties = {
       amount: presupuestoData.totales.total.toString(),
       mp_metros_cuadrados_totales: metrosCuadradosTotales.toString(),
+      mp_precio_promedio_m2: promedioPrecioM2.toString(),
       dealstage: 'presupuesto_enviado' // Opcional, según requerimiento
     };
 
