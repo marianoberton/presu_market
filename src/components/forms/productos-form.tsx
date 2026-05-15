@@ -334,32 +334,6 @@ export function ProductosForm({ productos, onChange }: ProductosFormProps) {
                       />
                     </div>
 
-                    {/* Total m² del ítem (solo otros-items) */}
-                    {producto.tipo === 'otros-items' && (
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Total m² del ítem
-                        </label>
-                        <Input
-                          type="text"
-                          inputMode="decimal"
-                          pattern="^\\d*([.,]\\d{0,4})?$"
-                          value={m2OtrosInput[producto.id] ?? ((producto.metrosCuadradosManual ?? 0) === 0 ? '' : (producto.metrosCuadradosManual ?? 0).toString())}
-                          onChange={(e) => {
-                            const raw = e.target.value;
-                            if (raw === '' || /^[0-9.,]*$/.test(raw)) {
-                              setM2OtrosInput(prev => ({ ...prev, [producto.id]: raw }));
-                              const normalized = raw.replace(',', '.');
-                              const parsed = parseFloat(normalized);
-                              actualizarProducto(producto.id, 'metrosCuadradosManual', isNaN(parsed) ? 0 : parsed);
-                            }
-                          }}
-                          placeholder="Ej: 12,50"
-                          className="w-full"
-                        />
-                        <p className="mt-1 text-xs text-gray-500">Este valor se suma al m² total del presupuesto.</p>
-                      </div>
-                    )}
 
                     {/* Color - Input libre para estos items */}
                     <div>

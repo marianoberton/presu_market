@@ -488,13 +488,15 @@ export function PDFDocument({ data }: PDFDocumentProps) {
           </View>
         </View>
 
-        {/* DESCRIPCIÓN DE ABREVIACIONES - LADO IZQUIERDO A LA ALTURA DEL TOTAL */}
-        <View style={styles.abbreviationsNote}>
-          <Text style={styles.abbreviationsTitle}>Abreviaciones:</Text>
-          <Text style={styles.abbreviationsText}>
-            LAR. = Largo • AN. = Ancho{'\n'}P.U. = Precio Unitario • CANT. = Cantidad
-          </Text>
-        </View>
+        {/* DESCRIPCIÓN DE ABREVIACIONES - solo cuando hay productos con dimensiones */}
+        {!data.productos.every(p => p.tipo === 'otros-items') && (
+          <View style={styles.abbreviationsNote}>
+            <Text style={styles.abbreviationsTitle}>Abreviaciones:</Text>
+            <Text style={styles.abbreviationsText}>
+              LAR. = Largo • AN. = Ancho{'\n'}P.U. = Precio Unitario • CANT. = Cantidad
+            </Text>
+          </View>
+        )}
         </View>
 
         {/* CONDICIONES COMERCIALES - PÁGINA SEPARADA SIN TOTALES */}

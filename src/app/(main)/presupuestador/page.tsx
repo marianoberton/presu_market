@@ -255,19 +255,13 @@ export default function PresupuestadorPage() {
         return p.descripcion?.trim() !== '' && p.precio > 0;
       });
     
-    // Validar para 'otros-items' que tenga m² manual > 0
-    const otrosItemsConM2Valido = productos
-      .filter(p => p.tipo === 'otros-items')
-      .every(p => (p.metrosCuadradosManual ?? 0) > 0);
-    
     console.log('Validación del formulario:');
     console.log('- Cliente válido:', clienteValido);
     console.log('- Productos válidos:', productosValidos);
-    console.log('- m² manual válido en otros-items:', otrosItemsConM2Valido);
     console.log('- Datos cliente:', datosCliente);
     console.log('- Productos:', productos);
-    
-    return clienteValido && productosValidos && otrosItemsConM2Valido;
+
+    return clienteValido && productosValidos;
   };
 
   const esFormularioValidoParaHubSpot = () => {

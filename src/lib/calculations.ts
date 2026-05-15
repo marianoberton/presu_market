@@ -294,15 +294,9 @@ export function calcularMetrosCuadradosTotales(productos: ProductoData[]): numbe
     // Solo calcular m² para productos que tienen dimensiones físicas
     // Excluir polímero y sacabocado ya que no tienen dimensiones físicas relevantes
     if (producto.tipo !== 'polimero' && producto.tipo !== 'sacabocado' && producto.tipo !== 'otros-items') {
-      // Usar la función existente para obtener la superficie de producción
       const medidas = calcularMedidasProduccion(producto.largo, producto.ancho, producto.alto, producto.tipo);
       const superficieTotalProducto = medidas.superficie * producto.cantidad;
-      
       metrosCuadradosTotales += superficieTotalProducto;
-    } else if (producto.tipo === 'otros-items') {
-      // Para "otros-items", sumar el campo manual de m² totales del ítem
-      const m2Manual = producto.metrosCuadradosManual || 0;
-      metrosCuadradosTotales += m2Manual;
     }
   });
 

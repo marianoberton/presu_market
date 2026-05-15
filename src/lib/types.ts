@@ -89,15 +89,13 @@ export const TIPO_PRODUCTO_OPTIONS = [
 export const CALIDAD_OPTIONS = [
   "4 mm 90 lbs",
   "4 mm 110 lbs",
-  "4 mm 130 lbs",
   "4 mm 150 lbs",
   "7 mm dt",
   "7 mm dt ref",
-  "90 lbs 4 mm",
-  "150 lbs 4mm",
   "4 mm",
   "90",
-  "x unidad"
+  "x unidad",
+  "Microcorrugado"
 ];
 
 export const COLOR_OPTIONS = [
@@ -108,19 +106,12 @@ export const COLOR_OPTIONS = [
 ];
 
 export const DESCRIPCION_OPTIONS = [
-  "Cajas de cartón corrugado.",
-  "Cajas de cartón corrugado. Aleta simpla onda c.",
+  "Cajas de cartón corrugado. Aleta simple onda c.",
   "Cajas de cartón corrugado. Aleta cruzada inferior. Onda C.",
   "Cajas de cartón corrugado. Aleta simple superior, aleta doble inferior. onda c.",
-  "Cajas de cartón corrugado. CON IMPRESIÓN.",
-  "Cajas de cartón corrugado. SIN IMPRESIÓN.",
-  "Cajas de cartón corrugado impresa, polimero disponible.",
+  "Cajas de cartón doble corrugado. Aleta simple onda DT.",
   "Plancha carton corrugado.",
-  "Plancha lisa carton corrugado.",
   "Plancha trazada carton corrugado.",
-  "Vaso De Polipapel Kraft/Blanco Con Tapa.",
-  "Bolsas de papel kraft delivery.",
-  "CAJA CC (en varias medidas, indicando paquetes).",
   "POLIMERO 1 COLOR / polimero un color.",
   "POLIMERO 1 O 2 COLOR (ENVIAR ARCHIVO DE DISEÑO).",
   "Sacabocado para troquelar."
