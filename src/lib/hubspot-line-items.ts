@@ -1,6 +1,15 @@
 import { ProductoData } from './types';
 import { calcularMedidasProduccion, calcularPrecioM2 } from './calculations';
 
+function mapearTipoMaterial(calidad?: string): string {
+  if (!calidad) return '';
+  const c = calidad.trim().toLowerCase();
+  if (c.includes('7 mm') || c.includes('dt')) return 'Doble Triple';
+  if (c.startsWith('4 mm') || c === '90') return 'Simple';
+  if (c === 'microcorrugado') return 'Microcorrugado';
+  return '';
+}
+
 /**
  * Elimina las asociaciones de Line Items existentes de un Deal
  * Para evitar duplicados al actualizar un presupuesto
@@ -109,6 +118,8 @@ export async function crearLineItemsHubSpot(dealId: string, items: ProductoData[
                     precioM2 = calcularPrecioM2(finalPrice, m2Unitario);
                 }
 
+                const tipoMaterial = mapearTipoMaterial(item.calidad);
+
                 const body = {
                     properties: {
                         name: name,
@@ -119,7 +130,8 @@ export async function crearLineItemsHubSpot(dealId: string, items: ProductoData[
                         mp_alto_mm: alto.toString(),
                         mp_tipo_caja: item.tipo || "otro",
                         mp_metros_cuadrados_item: m2Unitario.toString(),
-                        mp_precio_m2_unitario: precioM2.toString()
+                        mp_precio_m2_unitario: precioM2.toString(),
+                        mp_tipo_material: tipoMaterial
                     },
                     associations: [
                 {
